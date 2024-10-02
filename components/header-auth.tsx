@@ -6,9 +6,18 @@ import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function AuthButton() {
+  const supabase = createClient();
   const {
     data: { user },
   } = await createClient().auth.getUser();
+
+  const { data } = await supabase
+    .from("profiles")
+    .select(`full_name`)
+    .eq("id", user?.id)
+    .single();
+
+  let name = data?.full_name;
 
   if (!hasEnvVars) {
     return (
@@ -48,7 +57,9 @@ export default async function AuthButton() {
   }
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
+      <p>
+        Hey, <strong>{name}</strong>
+      </p>
       <form action={signOutAction}>
         <Button type="submit" variant={"outline"}>
           Sign out
