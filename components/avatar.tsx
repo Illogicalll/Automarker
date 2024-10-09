@@ -18,23 +18,23 @@ export default function Avatar({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(url);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    async function downloadImage(path: string) {
-      try {
-        const { data, error } = await supabase.storage
-          .from("avatars")
-          .download(path);
-        if (error) {
-          throw error;
-        }
-
-        const url = URL.createObjectURL(data);
-        setAvatarUrl(url);
-      } catch (error) {
-        console.log("Error downloading image: ", error);
+  async function downloadImage(path: string) {
+    try {
+      const { data, error } = await supabase.storage
+        .from("avatars")
+        .download(path);
+      if (error) {
+        throw error;
       }
-    }
 
+      const url = URL.createObjectURL(data);
+      setAvatarUrl(url);
+    } catch (error) {
+      console.log("Error downloading image: ", error);
+    }
+  }
+
+  useEffect(() => {
     if (url) downloadImage(url);
   }, [url, supabase]);
 
@@ -64,6 +64,7 @@ export default function Avatar({
     } catch (error) {
       alert("Error uploading avatar!");
     } finally {
+      if (url) downloadImage(url);
       setUploading(false);
     }
   };
@@ -71,36 +72,42 @@ export default function Avatar({
   return (
     <div>
       {avatarUrl ? (
-        <Image
-          width={size}
-          height={size}
-          src={avatarUrl}
-          alt="Avatar"
-          className="avatar image"
-          style={{ height: size, width: size }}
-        />
+        <>
+          <label className="button primary" htmlFor="single">
+            <div className="relative inline-block">
+              <div className="transition-opacity duration-300 ease-in-out hover:opacity-50 cursor-pointer">
+                <Image
+                  width={size}
+                  height={size}
+                  src={avatarUrl}
+                  alt="Avatar"
+                  className="avatar image"
+                  style={{ height: size, width: size }}
+                />
+              </div>
+            </div>
+          </label>
+          <input
+            style={{
+              visibility: "hidden",
+              position: "absolute",
+            }}
+            type="file"
+            id="single"
+            accept="image/*"
+            onChange={uploadAvatar}
+            disabled={uploading}
+          />
+        </>
       ) : (
         <div
-          className="avatar no-image"
           style={{ height: size, width: size }}
-        />
+          className="flex justify-center items-center bg-transparent"
+        >
+          Loading...
+        </div>
       )}
-      <div style={{ width: size }}>
-        <label className="button primary block" htmlFor="single">
-          {uploading ? "Uploading ..." : "Upload"}
-        </label>
-        <input
-          style={{
-            visibility: "hidden",
-            position: "absolute",
-          }}
-          type="file"
-          id="single"
-          accept="image/*"
-          onChange={uploadAvatar}
-          disabled={uploading}
-        />
-      </div>
+      <div style={{ width: size }}></div>
     </div>
   );
 }

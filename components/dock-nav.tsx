@@ -47,140 +47,140 @@ export default function DockNav() {
     <TooltipProvider>
       <Dock direction="middle">
         <DockIcon>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href={"/"}
-                aria-label={"Home"}
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
-                  "size-12 rounded-full",
-                )}
-              >
-                <HomeIcon />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Home</p>
-            </TooltipContent>
-          </Tooltip>
+          {/* <Tooltip> */}
+          {/*   <TooltipTrigger asChild> */}
+          <Link
+            href={"/"}
+            aria-label={"Home"}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "size-12 rounded-full",
+            )}
+          >
+            <HomeIcon />
+          </Link>
+          {/*   </TooltipTrigger> */}
+          {/*   <TooltipContent> */}
+          {/*     <p>Home</p> */}
+          {/*   </TooltipContent> */}
+          {/* </Tooltip> */}
         </DockIcon>
         <DockIcon>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href={"/assignments"}
-                aria-label={"My Assignments"}
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
-                  "size-12 rounded-full",
-                )}
-              >
-                <ClipboardIcon />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>My Assignments</p>
-            </TooltipContent>
-          </Tooltip>
+          {/* <Tooltip> */}
+          {/*   <TooltipTrigger asChild> */}
+          <Link
+            href={"/assignments"}
+            aria-label={"My Assignments"}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "size-12 rounded-full",
+            )}
+          >
+            <ClipboardIcon />
+          </Link>
+          {/*   </TooltipTrigger> */}
+          {/*   <TooltipContent> */}
+          {/*     <p>My Assignments</p> */}
+          {/*   </TooltipContent> */}
+          {/* </Tooltip> */}
         </DockIcon>
         <DockIcon>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href={"/profile"}
-                aria-label={"My Profile"}
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
-                  "size-12 rounded-full",
-                )}
-              >
-                <PersonIcon />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>My Profile</p>
-            </TooltipContent>
-          </Tooltip>
+          {/* <Tooltip> */}
+          {/*   <TooltipTrigger asChild> */}
+          <Link
+            href={"/profile"}
+            aria-label={"My Profile"}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "size-12 rounded-full",
+            )}
+          >
+            <PersonIcon />
+          </Link>
+          {/*   </TooltipTrigger> */}
+          {/*   <TooltipContent> */}
+          {/*     <p>My Profile</p> */}
+          {/*   </TooltipContent> */}
+          {/* </Tooltip> */}
         </DockIcon>
         <Separator orientation="vertical" className="h-full py-2" />
         {user ? (
           ""
         ) : (
           <DockIcon>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <form action={signOutAction}>
-                  <Link
-                    href={"/sign-in"}
-                    aria-label={"Sign In"}
-                    className={cn(
-                      buttonVariants({ variant: "ghost", size: "icon" }),
-                      "size-12 rounded-full",
-                    )}
-                  >
-                    <LogIn strokeWidth={1.1} size={16} />
-                  </Link>
-                </form>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Log In</p>
-              </TooltipContent>
-            </Tooltip>
+            {/* <Tooltip> */}
+            {/*   <TooltipTrigger asChild> */}
+            <form action={signOutAction}>
+              <Link
+                href={"/sign-in"}
+                aria-label={"Sign In"}
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "icon" }),
+                  "size-12 rounded-full",
+                )}
+              >
+                <LogIn strokeWidth={1.1} size={16} />
+              </Link>
+            </form>
+            {/*   </TooltipTrigger> */}
+            {/*   <TooltipContent> */}
+            {/*     <p>Log In</p> */}
+            {/*   </TooltipContent> */}
+            {/* </Tooltip> */}
           </DockIcon>
         )}
 
         {!user ? (
           <DockIcon>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <form action={signOutAction}>
-                  <Link
-                    href={"/sign-up"}
-                    aria-label={"Sign Up"}
-                    className={cn(
-                      buttonVariants({ variant: "ghost", size: "icon" }),
-                      "size-12 rounded-full",
-                    )}
-                  >
-                    <UserPlus strokeWidth={1.1} size={16} />
-                  </Link>
-                </form>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Sign Up</p>
-              </TooltipContent>
-            </Tooltip>
+            {/* <Tooltip> */}
+            {/*   <TooltipTrigger asChild> */}
+            <form action={signOutAction}>
+              <Link
+                href={"/sign-up"}
+                aria-label={"Sign Up"}
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "icon" }),
+                  "size-12 rounded-full",
+                )}
+              >
+                <UserPlus strokeWidth={1.1} size={16} />
+              </Link>
+            </form>
+            {/*   </TooltipTrigger> */}
+            {/*   <TooltipContent> */}
+            {/*     <p>Sign Up</p> */}
+            {/*   </TooltipContent> */}
+            {/* </Tooltip> */}
           </DockIcon>
         ) : (
           <DockIcon>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <form action={signOutAction}>
-                  <Button
-                    type="submit"
-                    variant={"outline"}
-                    className="border border-none rounded-full size-12"
-                  >
-                    <LogOut strokeWidth={1.1} size={16} />
-                  </Button>
-                </form>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Sign Out</p>
-              </TooltipContent>
-            </Tooltip>
+            {/* <Tooltip> */}
+            {/*   <TooltipTrigger asChild> */}
+            <form action={signOutAction}>
+              <Button
+                type="submit"
+                variant={"outline"}
+                className="border border-none rounded-full size-12"
+              >
+                <LogOut strokeWidth={1.1} size={16} />
+              </Button>
+            </form>
+            {/*   </TooltipTrigger> */}
+            {/*   <TooltipContent> */}
+            {/*     <p>Sign Out</p> */}
+            {/*   </TooltipContent> */}
+            {/* </Tooltip> */}
           </DockIcon>
         )}
         <DockIcon>
-          <Tooltip>
-            <TooltipTrigger>
-              <ThemeSwitcher />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Theme</p>
-            </TooltipContent>
-          </Tooltip>
+          {/* <Tooltip> */}
+          {/*   <TooltipTrigger> */}
+          <ThemeSwitcher />
+          {/*   </TooltipTrigger> */}
+          {/*   <TooltipContent> */}
+          {/*     <p>Theme</p> */}
+          {/*   </TooltipContent> */}
+          {/* </Tooltip> */}
         </DockIcon>
       </Dock>
     </TooltipProvider>

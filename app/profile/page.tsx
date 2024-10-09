@@ -1,17 +1,14 @@
+"use client";
+
 import AccountForm from "@/components/account-form";
-import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
+import { useUserContext } from "@/components/context/user-context";
 
-export default async function Account() {
-  const supabase = createClient();
+export default function Account() {
+  const { user, name } = useUserContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect("/sign-in");
-  }
-
-  return <AccountForm user={user} />;
+  return (
+    <div className="h-full w-full">
+      <AccountForm user={user} name={name} />
+    </div>
+  );
 }

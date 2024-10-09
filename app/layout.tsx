@@ -7,60 +7,74 @@ import ShineBorder from "@/components/ui/shine-border";
 import "./globals.css";
 import { useEffect, useState } from "react";
 import DockNav from "@/components/dock-nav";
+import { createClient } from "@/utils/supabase/client";
+import { UserProvider } from "@/components/context/user-context";
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [width, setWindowWidth] = useState(0);
-  const [height, setWindowHeight] = useState(0);
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setWindowHeight(window.innerHeight);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+  // const [user, setUser] = useState<User | null>(null);
+  // const [name, setName] = useState<string | null>(null);
+  // const supabase = createClient();
+  //
+  // async function checkUser() {
+  //   const {
+  //     data: { user },
+  //   } = await supabase.auth.getUser();
+  //   if (user) {
+  //     setUser(user);
+  //     const { data } = await supabase
+  //       .from("profiles")
+  //       .select(`full_name`)
+  //       .eq("id", user?.id)
+  //       .single();
+  //     setName(data?.full_name);
+  //   } else {
+  //     setUser(null);
+  //   }
+  // }
+  //
+  // useEffect(() => {
+  //   const {} = supabase.auth.onAuthStateChange((event) => {
+  //     if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+  //       checkUser();
+  //     }
+  //   });
+  // }, []);
 
   return (
     <html lang="en" className={GeistSans.className} suppressHydrationWarning>
-      <body className="bg-background text-foreground overflow-hidden">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <main className="h-screen w-screen fixed top-0 left-0 flex items-center">
-            <div
-              className="flex-1 w-full flex items-center justify-center"
-              style={{
-                flexDirection: width < 1171 ? "column" : "row",
-                gap: width < 1171 ? "0px" : "50px",
-                padding: width < 1171 ? "15px" : "40px",
-              }}
-            >
-              <SideBar />
-              <ShineBorder
-                className={`h-[${width < 1171 ? "90vh" : "95vh"}] w-full overflow-hidden rounded-xl p-3 mb-[${height > 1100 ? "14px" : "0px"}]`}
-                color={["#A07CFE", "#FE8FB5", "#FFBE7B"]}
-                borderWidth={3}
-                borderRadius={12}
-              >
-                <div className="w-full h-full z-10 overflow-y-scroll">
-                  {children}
+      <UserProvider>
+        <body className="bg-background text-foreground overflow-hidden">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <main className="h-screen w-screen fixed top-0 left-0 flex items-center">
+              <div className="main-container">
+                <SideBar />
+                <div className="content-container">
+                  <ShineBorder
+                    className="shine-border-container"
+                    color={["#A07CFE", "#FE8FB5", "#FFBE7B"]}
+                    borderWidth={3}
+                    borderRadius={12}
+                  >
+                    <div className="content-wrapper">{children}</div>
+                  </ShineBorder>
                 </div>
-              </ShineBorder>
-              {width < 1171 ? <DockNav /> : ""}
-            </div>
-          </main>
-        </ThemeProvider>
-      </body>
+                <div className="dock-nav">
+                  <DockNav />
+                </div>
+              </div>
+            </main>
+          </ThemeProvider>
+        </body>
+      </UserProvider>
     </html>
   );
 }
