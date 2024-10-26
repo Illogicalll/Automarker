@@ -749,6 +749,7 @@ const DateTimePicker = React.forwardRef<
             onMonthChange={handleSelect}
             yearRange={yearRange}
             locale={locale}
+            fromDate={new Date()}
             {...props}
           />
           {granularity !== "day" && (

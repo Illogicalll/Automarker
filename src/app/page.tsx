@@ -4,7 +4,7 @@ import SparklesText from "@/components/ui/sparkles-text";
 
 export default function Index() {
   return (
-    <div className="flex flex-col w-full h-full text-center container-gap">
+    <div className="flex flex-col w-full h-full text-center container-gap text-balance">
       <h1 className="text-center text-6xl lg:text-8xl">
         The&nbsp;
         <SparklesText className="inline text-6xl lg:text-8xl" text="fastest" />

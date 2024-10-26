@@ -94,7 +94,7 @@ export default function CreateAssignment() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label>Problem Description</label>
+              <label>Description</label>
               <Textarea
                 value={problemDescription}
                 rows={10}
@@ -153,7 +153,7 @@ export default function CreateAssignment() {
                       Rust
                     </div>
                   </SelectItem>
-                  <SelectItem value="js">
+                  <SelectItem value="javascript">
                     <div className="flex items-center gap-2">
                       <img className="w-[20px] h-[20px]" src={Js.src} />
                       Javascript
@@ -174,7 +174,7 @@ export default function CreateAssignment() {
               disabled={loading || !(title && problemDescription && dueDate)}
             >
               {!(title && problemDescription && dueDate)
-                ? "Complete To Continue"
+                ? "Complete to Continue"
                 : loading
                   ? "Creating..."
                   : "Create"}
