@@ -78,7 +78,6 @@ export default function CodeComparison({
             <div className="flex items-center bg-accent p-2 text-sm text-foreground">
               <FileIcon className="mr-2 h-4 w-4" />
               {filename}
-              <span className="ml-auto">before</span>
             </div>
             {renderCode(beforeCode, highlightedBefore)}
           </div>

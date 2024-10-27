@@ -17,6 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import CodeComparison from "@/components/ui/code-comparison";
 import { Textarea } from "@/components/ui/textarea";
+import { AnimatedSubscribeButton } from "@/components/ui/animated-subscribe-button";
+import { DownloadIcon } from "lucide-react";
+import ShinyButton from "@/components/ui/shiny-button";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -29,8 +32,12 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const [modelSolution, setModelSolution] = useState<any>(null);
   const [skeletonCode, setSkeletonCode] = useState<any>(null);
   const [downloadedSkeleton, setDownloadedSkeleton] = useState<any>(null);
+  const [rawSkeleton, setRawSkeleton] = useState<any>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [problemStatement, setProblemStatement] = useState<any>(null);
+  const [downloadStatus, setDownloadStatus] = useState(false);
+  const [isZip, setIsZip] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -40,6 +47,10 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       if (error) {
         // do nothing
       } else {
+        if (data.type === "application/zip") {
+          setIsZip(true);
+        }
+        setRawSkeleton(data);
         const file = new File([data], "skeleton");
         const reader = new FileReader();
         reader.onload = (e: ProgressEvent<FileReader>) => {
@@ -58,6 +69,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
         console.error("Error fetching assignment:", error);
       } else {
         setAssignment(data[0]);
+        setProblemStatement(data[0].problem);
         if (data[0].setup === true) {
           fetchFiles();
         }
@@ -139,21 +151,124 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     window.location.reload();
   };
 
+  function delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  const handleDownload = async () => {
+    setDownloadStatus(true);
+    const blob = new Blob([rawSkeleton], { type: "application/octet-stream" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    let fileExtension;
+    switch (assignment.language) {
+      case "python":
+        fileExtension = "py";
+        break;
+      case "rust":
+        fileExtension = "rs";
+        break;
+      case "cpp":
+        fileExtension = "cpp";
+        break;
+      case "c":
+        fileExtension = "c";
+        break;
+      case "javascript":
+        fileExtension = "js";
+        break;
+      case "java":
+        fileExtension = "java";
+        break;
+      default:
+        fileExtension = "txt";
+        break;
+    }
+    if (isZip) {
+      fileExtension = "zip";
+    }
+    link.download = `skeleton.${fileExtension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="w-full h-[95vh] flex flex-col p-6 gap-5">
       <h1 className="text-6xl font-bold">{assignment?.title}</h1>
       <p className="text-sm text-muted-foreground">{assignment?.description}</p>
-      {isOwner ? <h1>Owner</h1> : <h1>Viewer</h1>}
+      <div className="flex gap-4">
+        {assignment ? (
+          <div onClick={handleDownload}>
+            <AnimatedSubscribeButton
+              buttonColor="#ffffff"
+              buttonTextColor="#000000"
+              subscribeStatus={downloadStatus}
+              initialText={
+                <span className="group inline-flex items-center">
+                  <p className="transition-transform duration-300 group-hover:-translate-x-1">
+                    Download Files
+                  </p>
+                  <DownloadIcon className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              }
+              changeText={
+                <span className="group inline-flex items-center text-black">
+                  Downloaded
+                </span>
+              }
+            />{" "}
+          </div>
+        ) : (
+          ""
+        )}
+
+        {isOwner && assignment ? (
+          <div
+            onClick={() => {
+              setPage(1);
+              setIsEditing(true);
+              setIsOpen(true);
+            }}
+            className="h-[44px] w-[200px]"
+          >
+            <ShinyButton className="h-[44px] w-[200px]">
+              <p className="mt-1">Edit Assignment</p>
+            </ShinyButton>
+          </div>
+        ) : assignment ? (
+          <ShinyButton>Submit Solution</ShinyButton>
+        ) : (
+          ""
+        )}
+      </div>
       <p>{assignment?.problem}</p>
-      {downloadedSkeleton ? (
-        <CodeComparison
-          beforeCode={downloadedSkeleton}
-          afterCode={""}
-          language={assignment?.language}
-          filename="Skeleton Code"
-          lightTheme="github-light"
-          darkTheme="github-dark"
-        />
+      {downloadedSkeleton && !isZip ? (
+        <div className="pb-5">
+          <CodeComparison
+            beforeCode={downloadedSkeleton}
+            afterCode={""}
+            language={assignment?.language}
+            filename="Skeleton Code"
+            lightTheme="github-light"
+            darkTheme="github-dark"
+          />
+        </div>
+      ) : downloadedSkeleton ? (
+        <div className="pb-5">
+          <CodeComparison
+            beforeCode={
+              ".zip file format not supported, please download the file to view"
+            }
+            afterCode={""}
+            language={"text"}
+            filename="Skeleton Code"
+            lightTheme="github-light"
+            darkTheme="github-dark"
+          />
+        </div>
       ) : (
         ""
       )}
@@ -168,7 +283,16 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
           >
             <DialogHeader>
               <DialogTitle>Set Up Your Assignment</DialogTitle>
-              <DialogDescription>Fill out the fields below</DialogDescription>
+              <DialogDescription>
+                {isEditing ? (
+                  <span>
+                    Fill out the fields below. What you dont touch won't be
+                    changed, even if it appears empty
+                  </span>
+                ) : (
+                  <span>Fill out the fields below</span>
+                )}
+              </DialogDescription>
             </DialogHeader>
             {page === 1 ? (
               <p>groups</p>
@@ -188,7 +312,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                   <Input
                     id="model_solution"
                     type="file"
-                    accept=".py, .js, .c, .cpp, .rs, .java"
+                    accept=".py, .js, .c, .cpp, .rs, .java, .zip"
                     className="cursor-pointer"
                     onChange={(event) =>
                       setModelSolution(
@@ -211,14 +335,19 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                   <Input
                     id="skeleton_code"
                     type="file"
-                    accept=".py, .js, .c, .cpp, .rs, .java"
+                    accept=".py, .js, .c, .cpp, .rs, .java, .zip"
                     className="cursor-pointer"
-                    onChange={(event) =>
-                      setSkeletonCode(
-                        event.target.files && event.target.files[0],
-                      )
-                    }
-                  />
+                    onChange={(event) => {
+                      const file = event.target.files && event.target.files[0];
+                      if (file) {
+                        setSkeletonCode(file);
+                        setIsZip(
+                          file.type === "application/zip" ||
+                            file.name.endsWith(".zip"),
+                        );
+                      }
+                    }}
+                  />{" "}
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="problem" className="cursor-pointer font-bold">
@@ -247,6 +376,14 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                         : modelSolution === null
                           ? "Complete to Continue"
                           : "Finish"}
+                </Button>
+              ) : isEditing ? (
+                <Button
+                  type="submit"
+                  onClick={handleSubmit2}
+                  disabled={loading}
+                >
+                  {loading ? "Updating..." : "Finish"}
                 </Button>
               ) : (
                 <Button

@@ -46,17 +46,22 @@ export default function CreateAssignment() {
     if (user) {
       setLoading(true);
 
-      const { data, error } = await supabase.from("assignments").insert([
-        {
-          title,
-          description: problemDescription,
-          language: language,
-          due_date: dueDate,
-        },
-      ]);
+      const { data, error } = await supabase
+        .from("assignments")
+        .insert([
+          {
+            title,
+            description: problemDescription,
+            language: language,
+            due_date: dueDate,
+          },
+        ])
+        .select("id");
 
       if (error) {
         console.error("Error inserting assignment:", error);
+      } else {
+        window.location.pathname = `/assignment/${data[0].id}`;
       }
     } else {
       console.log("User not authenticated");

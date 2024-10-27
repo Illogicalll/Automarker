@@ -15,7 +15,7 @@ export default function Assignment({
       gradientColor={theme === "dark" ? "#262626" : "#D9D9D955"}
     >
       <h2 className="text-3xl font-semibold">{title}</h2>
-      <p>{description}</p>
+      <p className="text-sm text-muted-foreground">{description}</p>
     </MagicCard>
   );
 }
