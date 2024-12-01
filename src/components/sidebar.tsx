@@ -6,6 +6,7 @@ import Link from "next/link";
 import { HomeIcon, ClipboardIcon, PersonIcon } from "@radix-ui/react-icons";
 import { Button } from "./ui/button";
 import { useUserContext } from "./context/user-context";
+import { Users } from "lucide-react";
 
 export function SideBar() {
   const { user, name } = useUserContext();
@@ -35,6 +36,16 @@ export function SideBar() {
               <p>My Asssignments</p>
             </Button>
           </Link>
+          <Link href="/groups">
+            <Button
+              variant={"outline"}
+              className="w-full flex flex-row items-center p-7 gap-4 border rounded-xl border-b-foreground/10"
+            >
+              <Users size={16} />
+              <p>My Groups</p>
+            </Button>
+          </Link>
+
           <Link href="/profile">
             <Button
               variant={"outline"}

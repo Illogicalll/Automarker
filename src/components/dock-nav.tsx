@@ -17,6 +17,7 @@ import {
 import { Dock, DockIcon } from "./ui/dock";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
+import { Users } from "lucide-react";
 
 export type IconProps = React.HTMLAttributes<SVGElement>;
 
@@ -84,6 +85,26 @@ export default function DockNav() {
           {/*   </TooltipContent> */}
           {/* </Tooltip> */}
         </DockIcon>
+        <DockIcon>
+          {/* <Tooltip> */}
+          {/*   <TooltipTrigger asChild> */}
+          <Link
+            href={"/groups"}
+            aria-label={"My Groups"}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "size-12 rounded-full",
+            )}
+          >
+            <Users size={16} strokeWidth={1.5} />
+          </Link>
+          {/*   </TooltipTrigger> */}
+          {/*   <TooltipContent> */}
+          {/*     <p>My Profile</p> */}
+          {/*   </TooltipContent> */}
+          {/* </Tooltip> */}
+        </DockIcon>
+
         <DockIcon>
           {/* <Tooltip> */}
           {/*   <TooltipTrigger asChild> */}

@@ -49,7 +49,9 @@ export default function Signup({ searchParams }: { searchParams: Message }) {
               Sign in
             </Link>
           </p>
-          <FormMessage message={searchParams} />
+          <div className="w-100">
+            <FormMessage message={searchParams} />
+          </div>
         </div>
       </form>
     </div>

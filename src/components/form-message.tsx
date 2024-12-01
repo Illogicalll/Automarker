@@ -5,9 +5,9 @@ export type Message =
 
 export function FormMessage({ message }: { message: Message }) {
   return (
-    <div className="flex flex-col gap-2 w-[60%] max-w-[400px] text-sm mt-6">
+    <div className="flex flex-col gap-2 text-sm mt-6">
       {"success" in message && (
-        <div className="text-foreground border-l-2 border-foreground px-4">
+        <div className="text-foreground border-l-2 border-r-2 border-foreground px-4">
           {message.success}
         </div>
       )}

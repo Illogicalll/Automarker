@@ -11,6 +11,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useUserContext } from "@/components/context/user-context";
 import { Input } from "@/components/ui/input";
@@ -38,6 +45,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const [downloadStatus, setDownloadStatus] = useState(false);
   const [isZip, setIsZip] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [groups, setGroups] = useState<any>(null);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -75,11 +83,26 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
         }
       }
     };
-
     fetchAssignment();
   }, []);
 
   useEffect(() => {
+    const fetchGroups = async () => {
+      if (user && groups === null) {
+        const { data, error } = await supabase
+          .from("groups")
+          .select()
+          .eq("owner", user.id);
+        if (error) {
+          console.error("Error fetching groups:", error);
+        } else {
+          setGroups(data);
+        }
+      }
+    };
+
+    fetchGroups();
+
     try {
       if (user.id === assignment.user_id) {
         setIsOwner(true);
@@ -115,6 +138,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
         console.log("User not authenticated");
       }
       setLoading(false);
+      setPage(2);
     }
   };
 
@@ -295,7 +319,38 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
               </DialogDescription>
             </DialogHeader>
             {page === 1 ? (
-              <p>groups</p>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Choose a group to set this assignment for:</Label>
+                  <Select
+                    onValueChange={(value) => setAssignees(value)}
+                    defaultValue={"select a group"}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Theme" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem disabled value="select a group">
+                        <div className="flex items-center gap-2">
+                          Select a Group
+                        </div>
+                      </SelectItem>
+                      {groups
+                        ? groups.map((group: any) => (
+                            <SelectItem
+                              key={group.id}
+                              value={group.id.toString()}
+                            >
+                              <div className="flex items-center gap-2">
+                                {group.name}
+                              </div>
+                            </SelectItem>
+                          ))
+                        : ""}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             ) : (
               <div className="flex flex-col gap-4 cursor-pointer">
                 <div className="flex flex-col gap-2">

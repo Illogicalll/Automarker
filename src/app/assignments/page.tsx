@@ -7,11 +7,15 @@ import AssignmentList from "@/components/assignment-list";
 export default function AssignmentsPage() {
   const supabase = createClient();
   const { user, name } = useUserContext();
-  const [assignments, setAssignments] = useState<null | any[] | number>(null);
+  const [myAssignments, setMyAssignments] = useState<null | any[] | number>(
+    null,
+  );
+  const [myGroups, setMyGroups] = useState<null | any[]>(null);
+  const [assignedToMe, setAssignedToMe] = useState<null | any[] | number>(null);
 
   useEffect(() => {
-    const fetchAssignments = async () => {
-      if (user && !assignments) {
+    const fetchMyAssignments = async () => {
+      if (user && !myAssignments) {
         const { data, error } = await supabase
           .from("assignments")
           .select()
@@ -20,23 +24,52 @@ export default function AssignmentsPage() {
           console.error("Error fetching assignments:", error);
         } else {
           if (data.length === 0) {
-            setAssignments(1);
+            setMyAssignments(1);
           } else {
-            setAssignments(data);
+            setMyAssignments(data);
           }
         }
       }
     };
 
-    fetchAssignments();
+    const fetchAssignedToMe = async () => {
+      if (user && !assignedToMe) {
+        const { data: groupData, error: groupError } = await supabase
+          .from("groups")
+          .select()
+          .contains("users", [user.id]);
+        if (groupError) {
+          console.error("Error fetching groups:", groupError);
+        } else {
+          setMyGroups(groupData);
+          const groupIds = groupData.map((group) => group.id);
+          const { data, error } = await supabase
+            .from("assignments")
+            .select()
+            .in("assigned_to", groupIds);
+          if (error) {
+            console.error("Error fetching assignments:", error);
+          } else {
+            if (data.length === 0) {
+              setAssignedToMe(1);
+            } else {
+              setAssignedToMe(data);
+            }
+          }
+        }
+      }
+    };
+
+    fetchMyAssignments();
+    fetchAssignedToMe();
   }, [user]);
 
   return (
     <div className="w-full h-[95vh] flex flex-col p-6">
       <h1 className="text-6xl font-bold">My Assignments</h1>
-      <AssignmentList assignments={assignments} />
+      <AssignmentList assignments={myAssignments} isMyAssignments={true} />
       <h1 className="text-6xl font-bold">Assigned to Me</h1>
-      {/* <AssignmentList assignments={""} /> */}
+      <AssignmentList assignments={assignedToMe} isMyAssignments={false} />
       <h1 className="text-6xl font-bold">Archive</h1>
       {/* <AssignmentList assignments={""} /> */}
     </div>
