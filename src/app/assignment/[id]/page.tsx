@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import {
   Dialog,
@@ -46,6 +46,8 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const [isZip, setIsZip] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [groups, setGroups] = useState<any>(null);
+  const fileInputRef = useRef(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -102,6 +104,21 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     };
 
     fetchGroups();
+
+    const fetchSubmission = async () => {
+      const { data, error } = await supabase.storage
+        .from("submissions")
+        .download(params.id + "/" + user.id);
+      if (error) {
+        // do nothing
+      } else {
+        setHasSubmitted(true);
+      }
+    };
+
+    if (user && !hasSubmitted) {
+      fetchSubmission();
+    }
 
     try {
       if (user.id === assignment.user_id) {
@@ -219,6 +236,22 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleCodeSubmission = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleCodeChange = async (event: any) => {
+    const file = event.target.files && event.target.files[0];
+    const filename = params.id + "/" + user.id;
+    if (file) {
+      const { data, error } = await supabase.storage
+        .from("submissions")
+        .upload(filename, file, { upsert: true });
+    }
+  };
+
   return (
     <div className="w-full h-[95vh] flex flex-col p-6 gap-5">
       <h1 className="text-6xl font-bold">{assignment?.title}</h1>
@@ -259,11 +292,27 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
             className="h-[44px] w-[200px]"
           >
             <ShinyButton className="h-[44px] w-[200px]">
-              <p className="mt-1">Edit Assignment</p>
+              <p className="mt-[3px]">Edit Assignment</p>
             </ShinyButton>
           </div>
-        ) : assignment ? (
-          <ShinyButton>Submit Solution</ShinyButton>
+        ) : assignment && !hasSubmitted ? (
+          <div onClick={handleCodeSubmission}>
+            <ShinyButton className="h-[44px] w-[200px]">
+              <p className="mt-[3px]">Submit Solution</p>
+            </ShinyButton>
+            <Input
+              id="model_solution"
+              type="file"
+              accept=".zip"
+              className="cursor-pointer hidden"
+              ref={fileInputRef}
+              onChange={(event) => handleCodeChange(event)}
+            />
+          </div>
+        ) : assignment && hasSubmitted ? (
+          <ShinyButton className="h-[44px] w-[200px]">
+            <p className="mt-[3px]">Submitted</p>
+          </ShinyButton>
         ) : (
           ""
         )}

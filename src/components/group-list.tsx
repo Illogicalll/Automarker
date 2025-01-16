@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export default function GroupList({ groups }: { groups: any }) {
   return (
-    <div className="w-full flex gap-6 p-6">
+    <div className="w-full flex gap-6 p-6 overflow-x-scroll overflow-y-hidden">
       {groups === 1 ? (
         <CreateGroup />
       ) : groups ? (
