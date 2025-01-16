@@ -249,6 +249,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       const { data, error } = await supabase.storage
         .from("submissions")
         .upload(filename, file, { upsert: true });
+      window.location.reload();
     }
   };
 
@@ -295,6 +296,10 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
               <p className="mt-[3px]">Edit Assignment</p>
             </ShinyButton>
           </div>
+        ) : assignment && hasSubmitted ? (
+          <ShinyButton className="h-[44px] w-[200px]">
+            <p className="mt-[3px]">Submitted</p>
+          </ShinyButton>
         ) : assignment && !hasSubmitted ? (
           <div onClick={handleCodeSubmission}>
             <ShinyButton className="h-[44px] w-[200px]">
@@ -309,10 +314,6 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
               onChange={(event) => handleCodeChange(event)}
             />
           </div>
-        ) : assignment && hasSubmitted ? (
-          <ShinyButton className="h-[44px] w-[200px]">
-            <p className="mt-[3px]">Submitted</p>
-          </ShinyButton>
         ) : (
           ""
         )}
