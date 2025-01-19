@@ -2,45 +2,25 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { useUserContext } from "@/components/context/user-context";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import CodeComparison from "@/components/ui/code-comparison";
-import { Textarea } from "@/components/ui/textarea";
 import { AnimatedSubscribeButton } from "@/components/ui/animated-subscribe-button";
 import { DownloadIcon } from "lucide-react";
 import ShinyButton from "@/components/ui/shiny-button";
+import EditAssignment from "@/components/edit-assignment";
+import ViewSubmissions from "@/components/view-submissions";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
   const [assignment, setAssignment] = useState<any>(null);
-  const [assignees, setAssignees] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
   const { user, name } = useUserContext();
   const [isOpen, setIsOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [modelSolution, setModelSolution] = useState<any>(null);
-  const [skeletonCode, setSkeletonCode] = useState<any>(null);
+  const [isOpen2, setIsOpen2] = useState(false);
   const [downloadedSkeleton, setDownloadedSkeleton] = useState<any>(null);
+  const [isSetup, setIsSetup] = useState(false);
   const [rawSkeleton, setRawSkeleton] = useState<any>(null);
-  const [isOwner, setIsOwner] = useState(false);
+  const [isOwner, setIsOwner] = useState<any>(null);
   const [problemStatement, setProblemStatement] = useState<any>(null);
   const [downloadStatus, setDownloadStatus] = useState(false);
   const [isZip, setIsZip] = useState(false);
@@ -48,6 +28,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const [groups, setGroups] = useState<any>(null);
   const fileInputRef = useRef(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [assignedTo, setAssignedTo] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -80,6 +61,8 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       } else {
         setAssignment(data[0]);
         setProblemStatement(data[0].problem);
+        setIsSetup(data[0].setup);
+        setAssignedTo(data[0].assigned_to);
         if (data[0].setup === true) {
           fetchFiles();
         }
@@ -116,7 +99,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       }
     };
 
-    if (user && !hasSubmitted) {
+    if (user && isOwner !== null && !isOwner && !hasSubmitted) {
       fetchSubmission();
     }
 
@@ -126,71 +109,13 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
         if (assignment.setup === false) {
           setIsOpen(true);
         }
+      } else {
+        setIsOwner(false);
       }
     } catch (error) {
       // do nothing
     }
   }, [user, assignment]);
-
-  const handleSubmit = async () => {
-    if (assignees === null) {
-      setPage(2);
-    } else {
-      if (user) {
-        setLoading(true);
-
-        const { data, error } = await supabase
-          .from("assignments")
-          .update([
-            {
-              assigned_to: assignees,
-            },
-          ])
-          .eq("id", params.id);
-
-        if (error) {
-          console.error("Error updating assignment:", error);
-        }
-      } else {
-        console.log("User not authenticated");
-      }
-      setLoading(false);
-      setPage(2);
-    }
-  };
-
-  const handleSubmit2 = async () => {
-    if (user) {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("assignments")
-        .update([
-          {
-            problem: problemStatement,
-            setup: true,
-          },
-        ])
-        .eq("id", params.id);
-      if (modelSolution !== null) {
-        const { data, error } = await supabase.storage
-          .from("model_solutions")
-          .upload(params.id, modelSolution, { upsert: true });
-      }
-      if (skeletonCode !== null) {
-        const { data, error } = await supabase.storage
-          .from("skeleton_codes")
-          .upload(params.id, skeletonCode, { upsert: true });
-      }
-      if (error) {
-        console.error("Error updating assignment:", error);
-      }
-    } else {
-      console.log("User not authenticated");
-    }
-    setLoading(false);
-    setIsOpen(false);
-    window.location.reload();
-  };
 
   function delay(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -284,18 +209,29 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
         )}
 
         {isOwner && assignment ? (
-          <div
+          <>
+            <div
+              onClick={() => {
+                setIsEditing(true);
+                setIsOpen(true);
+              }}
+              className="h-[44px] w-[200px]"
+            >
+              <ShinyButton className="h-[44px] w-[200px]">
+                <p className="mt-[3px]">Edit Assignment</p>
+              </ShinyButton>
+            </div>
+            <div
             onClick={() => {
-              setPage(1);
-              setIsEditing(true);
-              setIsOpen(true);
+              setIsOpen2(true);
             }}
             className="h-[44px] w-[200px]"
           >
             <ShinyButton className="h-[44px] w-[200px]">
-              <p className="mt-[3px]">Edit Assignment</p>
+              <p className="mt-[3px]">View Submissions</p>
             </ShinyButton>
           </div>
+        </>
         ) : assignment && hasSubmitted ? (
           <ShinyButton className="h-[44px] w-[200px]">
             <p className="mt-[3px]">Submitted</p>
@@ -346,174 +282,8 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       ) : (
         ""
       )}
-      <Dialog open={isOpen}>
-        <DialogTrigger className="outline-none focus:outline-none hover:outline-none"></DialogTrigger>
-        <form onSubmit={handleSubmit}>
-          <DialogContent
-            className="sm:max-w-[825px] flex flex-col"
-            onInteractOutside={(e) => {
-              e.preventDefault();
-            }}
-          >
-            <DialogHeader>
-              <DialogTitle>Set Up Your Assignment</DialogTitle>
-              <DialogDescription>
-                {isEditing ? (
-                  <span>
-                    Fill out the fields below. What you dont touch won't be
-                    changed, even if it appears empty
-                  </span>
-                ) : (
-                  <span>Fill out the fields below</span>
-                )}
-              </DialogDescription>
-            </DialogHeader>
-            {page === 1 ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label>Choose a group to set this assignment for:</Label>
-                  <Select
-                    onValueChange={(value) => setAssignees(value)}
-                    defaultValue={"select a group"}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Theme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem disabled value="select a group">
-                        <div className="flex items-center gap-2">
-                          Select a Group
-                        </div>
-                      </SelectItem>
-                      {groups
-                        ? groups.map((group: any) => (
-                            <SelectItem
-                              key={group.id}
-                              value={group.id.toString()}
-                            >
-                              <div className="flex items-center gap-2">
-                                {group.name}
-                              </div>
-                            </SelectItem>
-                          ))
-                        : ""}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4 cursor-pointer">
-                <div className="flex flex-col gap-2">
-                  <Label
-                    htmlFor="model_solution"
-                    className="cursor-pointer font-bold"
-                  >
-                    Model Solution
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    AutoAssign will compile and run this code and match its
-                    output against submissions
-                  </p>
-                  <Input
-                    id="model_solution"
-                    type="file"
-                    accept=".py, .js, .c, .cpp, .rs, .java, .zip"
-                    className="cursor-pointer"
-                    onChange={(event) =>
-                      setModelSolution(
-                        event.target.files && event.target.files[0],
-                      )
-                    }
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label
-                    htmlFor="skeleton_code"
-                    className="cursor-pointer font-bold"
-                  >
-                    Skeleton Code (Optional)
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    This will be provided to assignees to use as a structure on
-                    which they will build their solution
-                  </p>
-                  <Input
-                    id="skeleton_code"
-                    type="file"
-                    accept=".py, .js, .c, .cpp, .rs, .java, .zip"
-                    className="cursor-pointer"
-                    onChange={(event) => {
-                      const file = event.target.files && event.target.files[0];
-                      if (file) {
-                        setSkeletonCode(file);
-                        setIsZip(
-                          file.type === "application/zip" ||
-                            file.name.endsWith(".zip"),
-                        );
-                      }
-                    }}
-                  />{" "}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="problem" className="cursor-pointer font-bold">
-                    Problem Statement
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Describe the task
-                  </p>
-                  <Textarea
-                    value={problemStatement ? problemStatement : ""}
-                    rows={10}
-                    onChange={(e) => setProblemStatement(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              {page === 1 ? (
-                <Button type="submit" onClick={handleSubmit} disabled={loading}>
-                  {loading
-                    ? "Updating..."
-                    : assignees === null && page === 1
-                      ? "Skip for Now"
-                      : page === 1
-                        ? "Add Assignees"
-                        : modelSolution === null
-                          ? "Complete to Continue"
-                          : "Finish"}
-                </Button>
-              ) : isEditing ? (
-                <Button
-                  type="submit"
-                  onClick={handleSubmit2}
-                  disabled={loading}
-                >
-                  {loading ? "Updating..." : "Finish"}
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  onClick={handleSubmit2}
-                  disabled={
-                    loading ||
-                    modelSolution === null ||
-                    problemStatement === null ||
-                    problemStatement === ""
-                  }
-                >
-                  {loading
-                    ? "Updating..."
-                    : modelSolution === null ||
-                        problemStatement === null ||
-                        problemStatement === ""
-                      ? "Complete to Continue"
-                      : "Finish"}
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </form>
-      </Dialog>
+      <EditAssignment params={params} isOpen={isOpen} setIsOpen={setIsOpen} groups={groups} existingProblemStatement={problemStatement} setup={isSetup} isEditing={isEditing} />
+      <ViewSubmissions isOpen={isOpen2} setIsOpen={setIsOpen2} params={params} assignedTo={assignedTo} />
     </div>
   );
 }
