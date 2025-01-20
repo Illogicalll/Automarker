@@ -15,9 +15,9 @@ interface ViewSubmissionsProps {
 
 export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo }: ViewSubmissionsProps) {
   const supabase = createClient();
-  const [users, setUsers] = useState<{ name: string, submitted: boolean }[]>([]);
-  const [searchQuery, setSearchQuery] = useState(""); // State for search query
-  const [filteredUsers, setFilteredUsers] = useState(users); // State for filtered users
+  const [users, setUsers] = useState<{ id: string, name: string, submitted: boolean }[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState(users);
 
   const listSubmissions = async () => {
     if (params) {
@@ -40,7 +40,7 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
             if (existingUser) {
               return users;
             }
-            return [...users, { name: data[0].full_name, submitted: true }];
+            return [...users, { id: user, name: data[0].full_name, submitted: true }];
           });
         }
       });
@@ -65,7 +65,7 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
               if (existingUser) {
                 return users;
               }
-              return [...users, { name: data[0].full_name, submitted: false }];
+              return [...users, { id: user, name: data[0].full_name, submitted: false }];
             });
           }
         });
@@ -92,7 +92,6 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
   }, [users]);
 
   useEffect(() => {
-    // Filter users based on the search query
     const lowerCaseQuery = searchQuery.toLowerCase();
     setFilteredUsers(
       users.filter((user) =>
@@ -113,6 +112,7 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
       cell: ({ row }) => {
         return <div className="text-center">{row.getValue("name")}</div>;
       },
+      enableSorting: true
     },
     {
       accessorKey: "submitted",
@@ -128,13 +128,14 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
           </div>
         );
       },
+      enableSorting: true
     },
     {
       accessorKey: "view",
       header: () => <div className="text-center">View Code</div>,
       cell: ({ row }) => {
         return (
-          <div className="flex justify-center items-center">
+          <div className="flex justify-center items-center" onClick={() => {window.location.pathname = "/submission/" + params.id + "/" + users.find(e => e.name === row.getValue("name"))?.id}}>
             <Button disabled={!row.getValue("submitted")}>
               <p>View</p>
             </Button>
