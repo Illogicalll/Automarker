@@ -5,7 +5,14 @@ import { useEffect, useState } from "react";
 import JSZip from "jszip";
 import { File, Folder, Tree } from "@/components/ui/file-tree";
 import CodeComparison from "@/components/ui/code-comparison";
-import { Progress } from "@/components/ui/progress"
+import { Progress } from "@/components/ui/progress";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 
 interface FileNode {
   id: string;
@@ -29,39 +36,36 @@ export default function SubmissionPage({
   const [progress, setProgress] = useState<number>(0);
   const [username, setUsername] = useState<string | null>(null);
   const [assignmentName, setAssignmentName] = useState<string | null>(null);
+  const [testOutput, setTestOutput] = useState<any | undefined>(undefined);
+  const [submissionZip, setSubmissionZip] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
   const downloadCode = async () => {
     setProgress(60);
     const { data, error } = await supabase.storage
       .from("submissions")
       .download(params.assignment_id + "/" + params.user_id);
-
+  
     if (error) {
       console.error("Error downloading file:", error);
       return;
     }
-    
+    setSubmissionZip(data);
+  
     setProgress(80);
     const zip = await JSZip.loadAsync(data);
     const fileTreeStructure: FolderNode[] = [];
-
-    const rootFolder: FolderNode = {
-      id: "src",
-      isSelectable: false,
-      name: "src",
-      children: [],
-    };
-
+  
     zip.forEach((relativePath, zipEntry) => {
-      if (relativePath.includes("__MACOSX")) {
+      if (relativePath.includes("__MACOSX") || relativePath.split('/')[relativePath.split('/').length - 1].startsWith('.') || relativePath.split('.').length > 2) {
         return;
       }
-
+  
       if (!zipEntry.dir) {
         const parts = relativePath.split("/");
-
-        let currentFolder: (FileNode | FolderNode)[] = rootFolder.children;
-
+  
+        let currentFolder: (FileNode | FolderNode)[] = fileTreeStructure;
+  
         parts.forEach((part, index) => {
           if (index === parts.length - 1) {
             currentFolder.push({
@@ -71,27 +75,27 @@ export default function SubmissionPage({
             });
           } else {
             let folder = currentFolder.find((el) => el.name === part);
-
             if (!folder) {
               folder = {
                 id: `${relativePath}-${index}`,
-                isSelectable: false,
+                isSelectable: true,
                 name: part,
                 children: [],
               } as FolderNode;
-
+  
               currentFolder.push(folder);
             }
+  
             currentFolder = (folder as FolderNode).children;
           }
         });
       }
     });
+  
     setProgress(95);
-    fileTreeStructure.push(rootFolder);
     setFileTree(fileTreeStructure);
   };
-
+  
   const handleFileSelection = async (file: FileNode) => {
     setSelectedFile(file);
     if (!fileContents[file.id]) {
@@ -130,6 +134,29 @@ export default function SubmissionPage({
       }
   }
 
+  function exploreTree(folder: FolderNode, handleFileSelection: (file: FileNode) => void) {
+    return folder.children?.map((child: FileNode) => {
+      if (child.hasOwnProperty('children') && (child as FolderNode).children) {
+        return (
+          <Folder key={child.id} value={child.id} element={child.name}>
+            {exploreTree(child as FolderNode, handleFileSelection)}
+          </Folder>
+        );
+      } else {
+        return (
+          <File key={child.id} value={child.id} onClick={() => handleFileSelection(child)}>
+            <p>{child.name}</p>
+          </File>
+        );
+      }
+    });
+  }
+
+  const texts = [
+    "Running",
+    "Tests"
+  ];
+
   useEffect(() => {
     downloadCode();
     getDetails();
@@ -140,46 +167,81 @@ export default function SubmissionPage({
     {fileTree.length !== 0 && username && assignmentName ? (
         <div className="w-full h-[95vh] flex flex-col p-6 gap-5">
           <h1 className="text-4xl font-bold">{username}'s submission for {assignmentName}</h1>
-          <div className="pb-5 flex">
-            <Tree
-              className="overflow-hidden rounded-md bg-background p-2 w-[20%]"
-              initialSelectedId="7"
-              initialExpandedItems={["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]}
-              elements={fileTree}
-            >
-              {fileTree.map((folder: FolderNode) => (
-                <Folder key={folder.id} element={folder.name} value={folder.id}>
-                  {folder.children?.map((child: FileNode) => (
-                    child.hasOwnProperty("children") ? (
-                      <Folder key={child.id} value={child.id} element={child.name}>
-                        {(child as FolderNode).children.map((file: FileNode) => (
-                          <File key={file.id} value={file.id} onClick={() => handleFileSelection(file)}>
-                            <p>{file.name}</p>
-                          </File>
-                        ))}
+          <Accordion type="multiple">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Testing</AccordionTrigger>
+              <AccordionContent className={isLoading ? "blur-sm rounded-sm transition-all cursor-default" : "transition-all"}>
+                <div className="w-full pb-5">
+                  <CodeComparison
+                    beforeCode={testOutput ? testOutput : "Tests have not been run yet. Click the button below to see test output here."}
+                    afterCode={""}
+                    language={"text"}
+                    filename={"Test Results"}
+                    lightTheme="github-light"
+                    darkTheme="github-dark"
+                  />
+                </div>
+                <InteractiveHoverButton
+                  className={isLoading ? "cursor-default" : ""}
+                  disabled={isLoading}
+                  onClick={async () => {
+                    if (!submissionZip || !params.assignment_id) {
+                      console.error("Submission zip or assignment ID is missing.");
+                      return;
+                    }
+                    setIsLoading(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append("submissionZip", submissionZip);
+                      formData.append("assignment_id", params.assignment_id);
+
+                      const response = await fetch("/api/execute", {
+                        method: "POST",
+                        body: formData,
+                      });
+
+                      if (!response.ok) {
+                        console.error("Failed to execute tests:", response.statusText);
+                        return;
+                      }
+
+                      const result = await response.json();
+                      setTestOutput(result.output || "No test output returned.");
+                    } catch (error) {
+                      console.error("Error executing tests:", error);
+                    }
+                    setIsLoading(false);
+                  }}
+                >
+                  {isLoading ? "Running Tests" : "Run Tests"}
+                </InteractiveHoverButton>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2" >
+              <AccordionTrigger>Code</AccordionTrigger>
+              <AccordionContent>
+                <div className="pb-5 flex flex-col">
+                  <Tree className="overflow-hidden rounded-md bg-background p-2">
+                    {fileTree.map((folder: FolderNode) => (
+                      <Folder key={folder.id} element={folder.name} value={folder.id}>
+                        {exploreTree(folder, handleFileSelection)}
                       </Folder>
-                    ) : (
-                      <File key={child.id} value={child.id} onClick={() => handleFileSelection(child)}>
-                        <p>{child.name}</p>
-                      </File>
-                    )
-                  ))}
-                </Folder>
-              ))}
-            </Tree>
-            <div className="w-[80%]">
-                <CodeComparison
-                  beforeCode={
-                    selectedFile ? (fileContents[selectedFile.id] || "Loading...") : "No file selected"
-                  }
-                  afterCode={""}
-                  language={selectedFile ? selectedFile.name.split('.')[1] : "text"}
-                  filename={selectedFile ? selectedFile.name : "No file selected"}
-                  lightTheme="github-light"
-                  darkTheme="github-dark"
-                />
-            </div>
-          </div>
+                    ))}
+                  </Tree>
+                  <CodeComparison
+                    beforeCode={
+                      selectedFile ? (fileContents[selectedFile.id] || "Loading...") : "No file selected"
+                    }
+                    afterCode={""}
+                    language={selectedFile ? selectedFile.name.split('.')[1] : "text"}
+                    filename={selectedFile ? selectedFile.name : "No file selected"}
+                    lightTheme="github-light"
+                    darkTheme="github-dark"
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
     ) : 
     (

@@ -165,12 +165,15 @@ export default function EditAssignment({ params, isOpen, setIsOpen, groups, exis
                     htmlFor="model_solution"
                     className="cursor-pointer font-bold"
                   >
-                    Model Solution
+                    Unit Tests
                   </Label>
-                  <p className="text-sm text-muted-foreground">
-                    AutoAssign will compile and run this code and match its
-                    output against submissions
-                  </p>
+                  <div className="inline">
+                    <p className="text-sm text-muted-foreground inline-block">
+                      AutoAssign will use these tests to automatically grade student submissions. For a guide on what to upload,
+                    </p>
+                    &nbsp;
+                    <p className="text-sm text-white underline inline-block z-50 cursor-pointer hover:text-gray-400">click here</p>.
+                  </div>
                   <Input
                     id="model_solution"
                     type="file"
