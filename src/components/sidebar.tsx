@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { LoadingSpinner } from "./ui/spinner";
+import Image from 'next/image';
 
 export function SideBar() {
   const { user, name } = useUserContext();
@@ -22,7 +23,7 @@ export function SideBar() {
     <nav className="sidebar w-[110px] flex justify-center border rounded-xl border-b-foreground/10 h-[95vh]">
       <div className="w-full flex flex-col justify-between items-center p-3 px-5 text-sm">
         <div className="flex flex-col gap-5 items-center font-semibold">
-          <h1 className="font-bold text-4xl p-10">Logo</h1>
+          <Image src={'/logo.png'} alt="logo" width="55" height="55" className="dark:invert pt-1" />
         </div>
         <div className="flex flex-col w-full gap-5">
           <TooltipProvider>

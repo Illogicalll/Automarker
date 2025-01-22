@@ -4,6 +4,7 @@ import React, { forwardRef, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 import { AnimatedBeam } from "@/components/ui/animated-beam";
+import Image from 'next/image';
 
 const Circle = forwardRef<
   HTMLDivElement,
@@ -53,7 +54,7 @@ export default function Languages() {
             <Icons.notion />
           </Circle>
           <Circle ref={div4Ref} className="size-16">
-            <Icons.openai />
+            <Image src={"/logo.png"} alt="logo" width="60" height="60" className="-mt-1" />
           </Circle>
           <Circle ref={div6Ref}>
             <Icons.zapier />

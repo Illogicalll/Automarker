@@ -152,11 +152,6 @@ export default function SubmissionPage({
     });
   }
 
-  const texts = [
-    "Running",
-    "Tests"
-  ];
-
   useEffect(() => {
     downloadCode();
     getDetails();
