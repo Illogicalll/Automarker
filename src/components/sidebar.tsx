@@ -7,70 +7,127 @@ import { HomeIcon, ClipboardIcon, PersonIcon } from "@radix-ui/react-icons";
 import { Button } from "./ui/button";
 import { useUserContext } from "./context/user-context";
 import { Users } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { LoadingSpinner } from "./ui/spinner";
 
 export function SideBar() {
   const { user, name } = useUserContext();
 
   return (
-    <nav className="sidebar w-[350px] flex justify-center border rounded-xl border-b-foreground/10 h-[95vh]">
+    <nav className="sidebar w-[110px] flex justify-center border rounded-xl border-b-foreground/10 h-[95vh]">
       <div className="w-full flex flex-col justify-between items-center p-3 px-5 text-sm">
         <div className="flex flex-col gap-5 items-center font-semibold">
-          <h1 className="font-bold text-4xl p-10">AutoAssign</h1>
+          <h1 className="font-bold text-4xl p-10">Logo</h1>
         </div>
         <div className="flex flex-col w-full gap-5">
-          <Link href="/">
-            <Button
-              variant={"outline"}
-              className="w-full flex flex-row items-center p-7 gap-4 border rounded-xl border-b-foreground/10"
-            >
-              <HomeIcon />
-              <p>Home</p>
-            </Button>
-          </Link>
-          <Link href="/assignments">
-            <Button
-              variant={"outline"}
-              className="w-full flex flex-row items-center p-7 gap-4 border rounded-xl border-b-foreground/10"
-            >
-              <ClipboardIcon />
-              <p>My Asssignments</p>
-            </Button>
-          </Link>
-          <Link href="/groups">
-            <Button
-              variant={"outline"}
-              className="w-full flex flex-row items-center p-7 gap-4 border rounded-xl border-b-foreground/10"
-            >
-              <Users size={16} />
-              <p>My Groups</p>
-            </Button>
-          </Link>
-
-          <Link href="/profile">
-            <Button
-              variant={"outline"}
-              className="w-full flex flex-row items-center p-7 gap-4 border rounded-xl border-b-foreground/10"
-            >
-              <PersonIcon />
-              <p>My Profile</p>
-            </Button>
-          </Link>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Link href="/">
+                    <Button
+                      variant={"outline"}
+                      className="w-full flex items-center justify-center px-6 py-7 gap-4 border rounded-xl border-b-foreground/10"
+                    >
+                      <HomeIcon />
+                    </Button>
+                  </Link>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                Home
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Link href="/assignments">
+                    <Button
+                      variant={"outline"}
+                      className="w-full flex flex-row items-center px-6 py-7 gap-4 border rounded-xl border-b-foreground/10"
+                    >
+                      <ClipboardIcon />
+                    </Button>
+                  </Link>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                Assignments
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Link href="/groups">
+                    <Button
+                      variant={"outline"}
+                      className="w-full flex flex-row items-center px-6 py-7 gap-4 border rounded-xl border-b-foreground/10"
+                    >
+                      <Users size={16} />
+                    </Button>
+                  </Link>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                Groups
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Link href="/profile">
+                    <Button
+                      variant={"outline"}
+                      className="w-full flex flex-row items-center px-6 py-7 gap-4 border rounded-xl border-b-foreground/10"
+                    >
+                      <PersonIcon />
+                    </Button>
+                  </Link>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                Profile
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         <div className="flex flex-col w-full justify-between items-center pt-10">
           {user ? (
-            <div className="flex items-center gap-4">
-              <p>
-                Hey, <strong>{name}</strong>
-              </p>
-              <form action={signOutAction}>
-                <Button type="submit" variant={"outline"}>
-                  Sign out
-                </Button>
-              </form>
+            <div className="flex flex-col items-center gap-4">
+            {name ? (
+              <>
+                <div className="flex flex-col text-center gap-1 overflow-hidden">
+                  <p>
+                    Hey,
+                  </p>
+                  <p>
+                    <strong>{name}</strong>
+                  </p>                
+                </div>
+                <form action={signOutAction}>
+                  <Button type="submit" variant={"outline"}>
+                    Sign out
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <LoadingSpinner />
+            )}
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <Button asChild size="sm" variant={"outline"}>
                 <Link href="/sign-in">Sign in</Link>
               </Button>
@@ -80,9 +137,11 @@ export function SideBar() {
             </div>
           )}
 
-          <div className="flex w-full justify-between items-center mt-6 flex-row h-[30px]">
+          <div className="flex flex-col w-full justify-between items-center mt-6 text-center">
             <p>
               ©&nbsp;
+            </p>
+            <p>
               <a
                 href="https://w-murphy.com"
                 target="_blank"
