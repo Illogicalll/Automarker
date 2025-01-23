@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
-import { DataTable } from "./data-table";
-import { ColumnDef } from "@tanstack/react-table";
-import { Cross2Icon, CheckIcon } from "@radix-ui/react-icons";
+import { ColumnDef, SortingState, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
+import { Cross2Icon, CheckIcon, ArrowUpIcon, ArrowDownIcon } from "@radix-ui/react-icons";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface ViewSubmissionsProps {
   isOpen: boolean;
@@ -18,6 +18,7 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
   const [users, setUsers] = useState<{ id: string, name: string, submitted: boolean }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState(users);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const listSubmissions = async () => {
     if (params) {
@@ -29,22 +30,13 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
           offset: 0,
           sortBy: { column: "name", order: "asc" },
         });
-      data?.map((submission) => submission.name).forEach(async (user) => {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select()
-          .eq("id", user);
-        if (data) {
-          setUsers((users) => {
-            const existingUser = users.find((u) => u.name === data[0].full_name);
-            if (existingUser) {
-              return users;
-            }
-            return [...users, { id: user, name: data[0].full_name, submitted: true }];
-          });
-        }
-      });
+
+      if (data) {
+        const submissionUserIds = data.map(submission => submission.name);
+        return submissionUserIds;
+      }
     }
+    return [];
   };
 
   const getAssignees = async () => {
@@ -53,43 +45,45 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
         .from("groups")
         .select("users")
         .eq("id", assignedTo);
+
       if (data) {
-        data[0].users.forEach(async (user: string) => {
-          const { data, error } = await supabase
-            .from("profiles")
-            .select()
-            .eq("id", user);
-          if (data) {
-            setUsers((users) => {
-              const existingUser = users.find((u) => u.name === data[0].full_name);
-              if (existingUser) {
-                return users;
-              }
-              return [...users, { id: user, name: data[0].full_name, submitted: false }];
-            });
-          }
-        });
+        return data[0].users;
       }
     }
+    return [];
+  };
+
+  const fetchUsers = async () => {
+    const submissionUserIds = await listSubmissions();
+    const assigneeUserIds = await getAssignees();
+
+    const allUserIds = Array.from(new Set([...submissionUserIds, ...assigneeUserIds]));
+
+    const usersWithSubmissionStatus = await Promise.all(
+      allUserIds.map(async (userId) => {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", userId)
+          .single();
+
+        if (data) {
+          return {
+            id: userId,
+            name: data.full_name,
+            submitted: submissionUserIds.includes(userId),
+          };
+        }
+        return null;
+      })
+    );
+
+    setUsers(usersWithSubmissionStatus.filter(user => user !== null) as { id: string, name: string, submitted: boolean }[]);
   };
 
   useEffect(() => {
-    listSubmissions();
-  }, [params]);
-
-  useEffect(() => {
-    getAssignees();
-  }, [assignedTo]);
-
-  useEffect(() => {
-    const lenBefore = users.length;
-    const uniqueUsers = users.filter(
-      (user, index, self) => index === self.findIndex((t) => t.name === user.name)
-    );
-    if (lenBefore !== uniqueUsers.length) {
-      setUsers(uniqueUsers);
-    }
-  }, [users]);
+    fetchUsers();
+  }, [params, assignedTo]);
 
   useEffect(() => {
     const lowerCaseQuery = searchQuery.toLowerCase();
@@ -100,35 +94,50 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
     );
   }, [searchQuery, users]);
 
-  type Submissions = {
-    name: string;
-    submitted: boolean;
-  };
-
-  const columns: ColumnDef<Submissions>[] = [
+  const columns: ColumnDef<{ id: string, name: string, submitted: boolean }>[] = [
     {
       accessorKey: "name",
-      header: () => <div className="text-center">Name</div>,
-      cell: ({ row }) => {
-        return <div className="text-center">{row.getValue("name")}</div>;
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Name
+            {
+              column.getIsSorted() === "asc" ? (<ArrowUpIcon className="ml-2 h-4 w-4" />) :column.getIsSorted() === "desc" ? (<ArrowDownIcon className="ml-2 h-4 w-4" />) : null
+            }
+          </Button>
+        );
       },
-      enableSorting: true
+      cell: ({ row }) => <div className="text-center">{row.getValue("name")}</div>,
+      enableSorting: true,
     },
     {
       accessorKey: "submitted",
-      header: () => <div className="text-center">Has Submitted</div>,
-      cell: ({ row }) => {
+      header: ({ column }) => {
         return (
-          <div className="flex justify-center items-center">
-            {row.getValue("submitted") ? (
-              <CheckIcon className="text-green-400 fill-current" />
-            ) : (
-              <Cross2Icon className="text-red-500 fill-current" />
-            )}
-          </div>
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Has Submitted
+            {
+              column.getIsSorted() === "asc" ? (<ArrowUpIcon className="ml-2 h-4 w-4" />) :column.getIsSorted() === "desc" ? (<ArrowDownIcon className="ml-2 h-4 w-4" />) : null
+            }
+          </Button>
         );
       },
-      enableSorting: true
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center">
+          {row.getValue("submitted") ? (
+            <CheckIcon className="text-green-400 fill-current" />
+          ) : (
+            <Cross2Icon className="text-red-500 fill-current" />
+          )}
+        </div>
+      ),
+      enableSorting: true,
     },
     {
       accessorKey: "view",
@@ -156,10 +165,21 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
     },
   ];
 
+  const table = useReactTable({
+    data: filteredUsers,
+    columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
   return (
     <Dialog open={isOpen}>
       <DialogTrigger className="outline-none focus:outline-none hover:outline-none"></DialogTrigger>
-      <DialogContent className="sm:max-w-[825px] flex flex-col">
+      <DialogContent className="max-w-[95vw] sm:w-[825px] flex flex-col">
         <DialogHeader>
           <DialogTitle>View Student Submissions</DialogTitle>
           <DialogDescription>
@@ -171,14 +191,39 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
         <div className="mb-4">
           <input
             type="text"
-            className="w-full p-2 border  rounded-md focus:outline-none focus:ring"
+            className="w-full p-2 border rounded-md focus:outline-none focus:ring"
             placeholder="Search by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-
-        <DataTable columns={columns} data={filteredUsers} />
+        
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="text-center">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="text-center">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
         <DialogFooter>
           <Button onClick={() => setIsOpen(false)}>

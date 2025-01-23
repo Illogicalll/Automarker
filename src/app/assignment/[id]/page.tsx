@@ -10,6 +10,7 @@ import { DownloadIcon } from "lucide-react";
 import ShinyButton from "@/components/ui/shiny-button";
 import EditAssignment from "@/components/edit-assignment";
 import ViewSubmissions from "@/components/view-submissions";
+import { LoadingSpinner } from "@/components/ui/spinner";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -26,7 +27,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const [isZip, setIsZip] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [groups, setGroups] = useState<any>(null);
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [assignedTo, setAssignedTo] = useState<number | null>(null);
 
@@ -91,7 +92,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     const fetchSubmission = async () => {
       const { data, error } = await supabase.storage
         .from("submissions")
-        .download(params.id + "/" + user.id);
+        .download(params.id + "/" + user?.id);
       if (error) {
         // do nothing
       } else {
@@ -104,7 +105,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     }
 
     try {
-      if (user.id === assignment.user_id) {
+      if (user?.id === assignment.user_id) {
         setIsOwner(true);
         if (assignment.setup === false) {
           setIsOpen(true);
@@ -169,7 +170,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
 
   const handleCodeChange = async (event: any) => {
     const file = event.target.files && event.target.files[0];
-    const filename = params.id + "/" + user.id;
+    const filename = params.id + "/" + user?.id;
     if (file) {
       const { data, error } = await supabase.storage
         .from("submissions")
@@ -180,110 +181,118 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="w-full h-[95vh] flex flex-col p-6 gap-5">
-      <h1 className="text-6xl font-bold">{assignment?.title}</h1>
-      <p className="text-sm text-muted-foreground">{assignment?.description}</p>
-      <div className="flex gap-4">
-        {assignment ? (
-          <div onClick={handleDownload}>
-            <AnimatedSubscribeButton
-              buttonColor="#ffffff"
-              buttonTextColor="#000000"
-              subscribeStatus={downloadStatus}
-              initialText={
-                <span className="group inline-flex items-center">
-                  <p className="transition-transform duration-300 group-hover:-translate-x-1">
-                    Download Files
-                  </p>
-                  <DownloadIcon className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </span>
-              }
-              changeText={
-                <span className="group inline-flex items-center text-black">
-                  Downloaded
-                </span>
-              }
-            />{" "}
-          </div>
-        ) : (
-          ""
-        )}
+      {assignment ? (
+        <>
+          <h1 className="text-6xl font-bold">{assignment?.title}</h1>
+          <p className="text-sm text-muted-foreground">{assignment?.description}</p>
+          <div className="flex gap-4">
+            {assignment ? (
+              <div onClick={handleDownload}>
+                <AnimatedSubscribeButton
+                  buttonColor="#ffffff"
+                  buttonTextColor="#000000"
+                  subscribeStatus={downloadStatus}
+                  initialText={
+                    <span className="group inline-flex items-center">
+                      <p className="transition-transform duration-300 group-hover:-translate-x-1">
+                        Download Files
+                      </p>
+                      <DownloadIcon className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </span>
+                  }
+                  changeText={
+                    <span className="group inline-flex items-center text-black">
+                      Downloaded
+                    </span>
+                  }
+                />{" "}
+              </div>
+            ) : (
+              ""
+            )}
 
-        {isOwner && assignment ? (
-          <>
-            <div
-              onClick={() => {
-                setIsEditing(true);
-                setIsOpen(true);
-              }}
-              className="h-[44px] w-[200px]"
-            >
+            {isOwner && assignment ? (
+              <>
+                <div
+                  onClick={() => {
+                    setIsEditing(true);
+                    setIsOpen(true);
+                  }}
+                  className="h-[44px] w-[200px]"
+                >
+                  <ShinyButton className="h-[44px] w-[200px]">
+                    <p className="mt-[3px]">Edit Assignment</p>
+                  </ShinyButton>
+                </div>
+                <div
+                onClick={() => {
+                  setIsOpen2(true);
+                }}
+                className="h-[44px] w-[200px]"
+              >
+                <ShinyButton className="h-[44px] w-[200px]">
+                  <p className="mt-[3px]">View Submissions</p>
+                </ShinyButton>
+              </div>
+            </>
+            ) : assignment && hasSubmitted ? (
               <ShinyButton className="h-[44px] w-[200px]">
-                <p className="mt-[3px]">Edit Assignment</p>
+                <p className="mt-[3px]">Submitted</p>
               </ShinyButton>
+            ) : assignment && !hasSubmitted ? (
+              <div onClick={handleCodeSubmission}>
+                <ShinyButton className="h-[44px] w-[200px]">
+                  <p className="mt-[3px]">Submit Solution</p>
+                </ShinyButton>
+                <Input
+                  id="model_solution"
+                  type="file"
+                  accept=".zip"
+                  className="cursor-pointer hidden"
+                  ref={fileInputRef}
+                  onChange={(event) => handleCodeChange(event)}
+                />
+              </div>
+            ) : (
+              ""
+            )}
+          </div>
+          <p>{assignment?.problem}</p>
+          {downloadedSkeleton && !isZip ? (
+            <div className="pb-5">
+              <CodeComparison
+                beforeCode={downloadedSkeleton}
+                afterCode={""}
+                language={assignment?.language}
+                filename="Skeleton Code"
+                lightTheme="github-light"
+                darkTheme="github-dark"
+              />
             </div>
-            <div
-            onClick={() => {
-              setIsOpen2(true);
-            }}
-            className="h-[44px] w-[200px]"
-          >
-            <ShinyButton className="h-[44px] w-[200px]">
-              <p className="mt-[3px]">View Submissions</p>
-            </ShinyButton>
-          </div>
+          ) : downloadedSkeleton ? (
+            <div className="pb-5">
+              <CodeComparison
+                beforeCode={
+                  ".zip file format not supported, please download the file to view"
+                }
+                afterCode={""}
+                language={"text"}
+                filename="Skeleton Code"
+                lightTheme="github-light"
+                darkTheme="github-dark"
+              />
+            </div>
+          ) : (
+            ""
+          )}
+          <EditAssignment params={params} isOpen={isOpen} setIsOpen={setIsOpen} groups={groups} existingProblemStatement={problemStatement} setup={isSetup} isEditing={isEditing} />
+          <ViewSubmissions isOpen={isOpen2} setIsOpen={setIsOpen2} params={params} assignedTo={assignedTo} />
         </>
-        ) : assignment && hasSubmitted ? (
-          <ShinyButton className="h-[44px] w-[200px]">
-            <p className="mt-[3px]">Submitted</p>
-          </ShinyButton>
-        ) : assignment && !hasSubmitted ? (
-          <div onClick={handleCodeSubmission}>
-            <ShinyButton className="h-[44px] w-[200px]">
-              <p className="mt-[3px]">Submit Solution</p>
-            </ShinyButton>
-            <Input
-              id="model_solution"
-              type="file"
-              accept=".zip"
-              className="cursor-pointer hidden"
-              ref={fileInputRef}
-              onChange={(event) => handleCodeChange(event)}
-            />
-          </div>
-        ) : (
-          ""
-        )}
-      </div>
-      <p>{assignment?.problem}</p>
-      {downloadedSkeleton && !isZip ? (
-        <div className="pb-5">
-          <CodeComparison
-            beforeCode={downloadedSkeleton}
-            afterCode={""}
-            language={assignment?.language}
-            filename="Skeleton Code"
-            lightTheme="github-light"
-            darkTheme="github-dark"
-          />
-        </div>
-      ) : downloadedSkeleton ? (
-        <div className="pb-5">
-          <CodeComparison
-            beforeCode={
-              ".zip file format not supported, please download the file to view"
-            }
-            afterCode={""}
-            language={"text"}
-            filename="Skeleton Code"
-            lightTheme="github-light"
-            darkTheme="github-dark"
-          />
-        </div>
       ) : (
-        ""
+        <div className="flex h-full justify-center items-center">
+          <LoadingSpinner size={40} />
+        </div>
       )}
-      <EditAssignment params={params} isOpen={isOpen} setIsOpen={setIsOpen} groups={groups} existingProblemStatement={problemStatement} setup={isSetup} isEditing={isEditing} />
-      <ViewSubmissions isOpen={isOpen2} setIsOpen={setIsOpen2} params={params} assignedTo={assignedTo} />
     </div>
   );
 }

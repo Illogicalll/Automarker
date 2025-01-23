@@ -122,9 +122,13 @@ export function SideBar() {
                     Sign out
                   </Button>
                 </form>
+                <ThemeSwitcher />
               </>
             ) : (
-              <LoadingSpinner />
+              <>
+                <LoadingSpinner />
+                <ThemeSwitcher />
+              </>
             )}
             </div>
           ) : (
@@ -135,25 +139,9 @@ export function SideBar() {
               <Button asChild size="sm" variant={"default"}>
                 <Link href="/sign-up">Sign up</Link>
               </Button>
+              <ThemeSwitcher />
             </div>
           )}
-
-          <div className="flex flex-col w-full justify-between items-center mt-6 text-center">
-            <p>
-              ©&nbsp;
-            </p>
-            <p>
-              <a
-                href="https://w-murphy.com"
-                target="_blank"
-                className="font-bold hover:underline"
-                rel="noreferrer"
-              >
-                Will Murphy
-              </a>
-            </p>
-            <ThemeSwitcher />
-          </div>
         </div>
       </div>
     </nav>

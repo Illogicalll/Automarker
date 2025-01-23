@@ -4,10 +4,12 @@ import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Login({ searchParams }: { searchParams: Message }) {
   return (
     <div className="w-full h-[95vh] flex flex-col justify-center items-center text-center">
+      <Image src={'/logo.png'} alt="logo" width="55" height="55" className="dark:invert pt-1" />
       <h1 className="text-6xl font-bold">Sign in</h1>
       <form className="flex flex-col w-[60%] max-w-[400px]">
         <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
