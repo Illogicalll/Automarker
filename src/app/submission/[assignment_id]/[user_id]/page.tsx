@@ -13,6 +13,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
+import { Badge } from "@/components/ui/badge";
 
 interface FileNode {
   id: string;
@@ -39,6 +40,7 @@ export default function SubmissionPage({
   const [testOutput, setTestOutput] = useState<any | undefined>(undefined);
   const [submissionZip, setSubmissionZip] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [results, setResults] = useState<any>(undefined);
   
   const downloadCode = async () => {
     setProgress(60);
@@ -176,6 +178,7 @@ export default function SubmissionPage({
                     darkTheme="github-dark"
                   />
                 </div>
+                <div className="flex gap-4 items-center">
                 <InteractiveHoverButton
                   className={isLoading ? "cursor-default" : ""}
                   disabled={isLoading}
@@ -201,6 +204,7 @@ export default function SubmissionPage({
                       }
 
                       const result = await response.json();
+                      setResults(result.results);
                       setTestOutput(result.output || "No test output returned.");
                     } catch (error) {
                       console.error("Error executing tests:", error);
@@ -210,6 +214,15 @@ export default function SubmissionPage({
                 >
                   {isLoading ? "Running Tests" : "Run Tests"}
                 </InteractiveHoverButton>
+                {results ? (
+                  <>
+                    <Badge className="h-[25px]" >Run: {results.run}</Badge>
+                    <Badge className="bg-green-400 h-[25px] hover:bg-green-300">Passed: {results.passed}</Badge>
+                    <Badge className="bg-red-600 h-[25px] text-white hover:bg-red-500">Failed: {results.failed}</Badge>
+                    <Badge className="bg-gray-600 h-[25px] text-white hover:bg-gray-500">Skipped: {results.skipped}</Badge>
+                  </>
+                ) : ""}
+                </div>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2" >

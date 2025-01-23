@@ -14,7 +14,7 @@ export default function ProtectedPage() {
           <h1 className="text-center text-8xl">
             Welcome back,
             <SparklesText
-              className="inline text-8xl font-bold"
+              className="block lg:inline text-8xl font-bold"
               text={`${name ? name : ""}!`}
             />
           </h1>

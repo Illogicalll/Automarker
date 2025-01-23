@@ -13,11 +13,10 @@ const execAsync = promisify(exec);
 async function extractZip(zip: JSZip, targetDir: string): Promise<void> {
   const files: any = [];
   zip.forEach((relativePath, file) => {
-    // Skip __MACOSX directory and hidden files
     if (relativePath.startsWith('__MACOSX/') || relativePath.startsWith('.')) {
       return;
     }
-    
+
     if (!file.dir) {
       files.push({
         path: path.join(targetDir, relativePath),
@@ -44,19 +43,33 @@ async function extractZip(zip: JSZip, targetDir: string): Promise<void> {
   }));
 }
 
-// async function listDirectoryContents(dir: string, indent: string = ''): Promise<string> {
-//   let output = '';
-//   const items = await fs.readdir(dir);
-//   for (const item of items) {
-//     const fullPath = path.join(dir, item);
-//     const stats = await fs.stat(fullPath);
-//     output += `${indent}${item} ${stats.isDirectory() ? '(dir)' : '(file)'}\n`;
-//     if (stats.isDirectory()) {
-//       output += await listDirectoryContents(fullPath, indent + '  ');
-//     }
-//   }
-//   return output;
-// }
+interface TestResults {
+  testsRun: number;
+  failures: number;
+  errors: number;
+  skipped: number;
+}
+
+function parseMavenOutput(output: string): TestResults | null {
+  const testResultsRegex = /Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+)/;
+
+  const lines = output.split('\n');
+
+  for (const line of lines) {
+    const match = line.match(testResultsRegex);
+    if (match) {
+
+      const testsRun = parseInt(match[1], 10);
+      const failures = parseInt(match[2], 10);
+      const errors = parseInt(match[3], 10);
+      const skipped = parseInt(match[4], 10);
+
+      return { testsRun, failures, errors, skipped };
+    }
+  }
+
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   const workDir = path.join(tmpdir(), uuidv4());
@@ -96,7 +109,7 @@ export async function POST(req: NextRequest) {
     const rootFolderName = submissionContents.find(
       name => !name.startsWith('.') && !name.startsWith('__')
     );
-    
+
     if (!rootFolderName) {
       throw new Error("Could not determine root folder name");
     }
@@ -104,9 +117,9 @@ export async function POST(req: NextRequest) {
     const submissionSrcPath = path.join(submissionDir, rootFolderName, "src");
     const modelSolutionFiles = await fs.readdir(modelSolutionDir);
     for (const file of modelSolutionFiles) {
-        const sourcePath = path.join(modelSolutionDir, file);
-        const destPath = path.join(submissionSrcPath, file);
-        await fs.cp(sourcePath, destPath, { recursive: true, force: true });
+      const sourcePath = path.join(modelSolutionDir, file);
+      const destPath = path.join(submissionSrcPath, file);
+      await fs.cp(sourcePath, destPath, { recursive: true, force: true });
     }
 
     const pomPath = path.join(submissionDir, rootFolderName, "pom.xml");
@@ -120,17 +133,33 @@ export async function POST(req: NextRequest) {
       cwd: path.join(submissionDir, rootFolderName)
     });
 
-    return NextResponse.json({ 
+    const parsedResults = parseMavenOutput(testResult.stdout);
+
+    return NextResponse.json({
       message: "Tests completed",
-      output: testResult.stdout + testResult.stderr
+      output: testResult.stdout,
+      results: parsedResults ? {
+        run: parsedResults.testsRun,
+        passed: parsedResults.testsRun - parsedResults.failures - parsedResults.errors,
+        failed: parsedResults.failures,
+        skipped: parsedResults.skipped
+      } : null
     });
 
   } catch (error: any) {
     if (error.cmd === 'mvn test') {
+      const parsedResults = parseMavenOutput(error.stdout);
+
       return NextResponse.json({
         message: "Tests completed",
-        output: error.stdout + error.stderr
-    });
+        output: error.stdout,
+        results: parsedResults ? {
+          run: parsedResults.testsRun,
+          passed: parsedResults.testsRun - parsedResults.failures - parsedResults.errors,
+          failed: parsedResults.failures,
+          skipped: parsedResults.skipped
+        } : null
+      });
     } else {
       console.error("Error processing request:", error);
       return NextResponse.json(
