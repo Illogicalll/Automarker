@@ -37,10 +37,12 @@ export default function SubmissionPage({
   const [progress, setProgress] = useState<number>(0);
   const [username, setUsername] = useState<string | null>(null);
   const [assignmentName, setAssignmentName] = useState<string | null>(null);
+  const [assignmentLanguage, setAssignmentLanguage] = useState<string | null>(null);
   const [testOutput, setTestOutput] = useState<any | undefined>(undefined);
   const [submissionZip, setSubmissionZip] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<any>(undefined);
+  const [scores, setScores] = useState<any>(undefined);
   
   const downloadCode = async () => {
     setProgress(60);
@@ -134,6 +136,33 @@ export default function SubmissionPage({
       if (assignmentName) {
         setAssignmentName(assignmentName[0].title)
       }
+      const { data: assignmentLanguage, error: assignmentLError } = await supabase
+      .from("assignments")
+      .select("language")
+      .eq("id", params.assignment_id);
+      if (assignmentLanguage) {
+        setAssignmentLanguage(assignmentLanguage[0].language)
+      }
+    const { data: scores, error: scoresError } = await supabase
+      .from("submissions")
+      .select("tests_run, tests_passed, tests_failed")
+      .eq("assignment_id", params.assignment_id)
+      .eq("user_id", params.user_id);
+      if (scores) {
+        setScores(scores[0])
+      }
+  }
+
+  const updateScore = async (scores: any) => {
+    const {data, error} = await supabase
+      .from("submissions")
+      .upsert([{
+        assignment_id: params.assignment_id,
+        user_id: params.user_id,
+        tests_run: scores.run,
+        tests_passed: scores.passed,
+        tests_failed: scores.failed,
+    }])
   }
 
   function exploreTree(folder: FolderNode, handleFileSelection: (file: FileNode) => void) {
@@ -170,7 +199,7 @@ export default function SubmissionPage({
               <AccordionContent className={isLoading ? "blur-sm rounded-sm transition-all cursor-default" : "transition-all"}>
                 <div className="w-full pb-5">
                   <CodeComparison
-                    beforeCode={testOutput ? testOutput : "Tests have not been run yet. Click the button below to see test output here."}
+                    beforeCode={testOutput ? testOutput : scores ? "Test output is not stored, only the results. Re-run the tests to see the output" : "Tests have not been run yet. Click the button below to see test output here."}
                     afterCode={""}
                     language={"text"}
                     filename={"Test Results"}
@@ -193,7 +222,7 @@ export default function SubmissionPage({
                       formData.append("submissionZip", submissionZip);
                       formData.append("assignment_id", params.assignment_id);
 
-                      const response = await fetch("/api/execute", {
+                      const response = await fetch(`/api/execute-${assignmentLanguage}`, {
                         method: "POST",
                         body: formData,
                       });
@@ -205,6 +234,7 @@ export default function SubmissionPage({
 
                       const result = await response.json();
                       setResults(result.results);
+                      updateScore(result.results);
                       setTestOutput(result.output || "No test output returned.");
                     } catch (error) {
                       console.error("Error executing tests:", error);
@@ -214,12 +244,11 @@ export default function SubmissionPage({
                 >
                   {isLoading ? "Running Tests" : "Run Tests"}
                 </InteractiveHoverButton>
-                {results ? (
+                {results || scores ? (
                   <>
-                    <Badge className="h-[25px]" >Run: {results.run}</Badge>
-                    <Badge className="bg-green-400 h-[25px] hover:bg-green-300">Passed: {results.passed}</Badge>
-                    <Badge className="bg-red-600 h-[25px] text-white hover:bg-red-500">Failed: {results.failed}</Badge>
-                    <Badge className="bg-gray-600 h-[25px] text-white hover:bg-gray-500">Skipped: {results.skipped}</Badge>
+                    <Badge className="h-[25px]" >Run: {scores ? scores.tests_run : results.run}</Badge>
+                    <Badge className="bg-green-400 h-[25px] hover:bg-green-300">Passed: {scores ? scores.tests_passed : results.passed}</Badge>
+                    <Badge className="bg-red-600 h-[25px] text-white hover:bg-red-500">Failed: {scores ? scores.tests_failed : results.failed}</Badge>
                   </>
                 ) : ""}
                 </div>

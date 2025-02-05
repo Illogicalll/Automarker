@@ -13,12 +13,20 @@ interface ViewSubmissionsProps {
   assignedTo: number | null;
 }
 
+interface Score {
+  tests_failed: number;
+  tests_passed: number;
+  tests_run: number;
+  user_id: string;
+}
+
 export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo }: ViewSubmissionsProps) {
   const supabase = createClient();
   const [users, setUsers] = useState<{ id: string, name: string, submitted: boolean }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState(users);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [scores, setScores] = useState<Score[]>([]);
 
   const listSubmissions = async () => {
     if (params) {
@@ -47,6 +55,13 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
         .eq("id", assignedTo);
 
       if (data) {
+        const { data: submissionsData, error } = await supabase
+          .from("submissions")
+          .select("user_id, tests_run, tests_passed, tests_failed") 
+          .eq("assignment_id", params.id);
+        if(submissionsData) {
+          setScores(submissionsData);
+        }
         return data[0].users;
       }
     }
@@ -156,9 +171,10 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
       accessorKey: "tests",
       header: () => <div className="text-center">Testing Results</div>,
       cell: ({ row }) => {
+        const score = scores.find(item => item.user_id === row.original.id);
         return (
           <div className="flex justify-center items-center">
-              Tests not run yet
+              {score ? `${score.tests_passed}/${score.tests_run} Tests Passed` : "Tests not run yet"}
           </div>
         );
       },
