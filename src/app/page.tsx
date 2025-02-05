@@ -12,9 +12,10 @@ export default function Index() {
       </h1>
       <div className="flex flex-col gap-5">
         <Languages />
-        <h1 className="text-2xl font-extralight text-margin-bottom">
+        <h1 className="text-2xl font-extralight">
           Compatible with all the popular languages
         </h1>
+        <p className="text-xl font-extralight text-gray-400">More coming soon!</p>
       </div>
       <Workflow />
     </div>
