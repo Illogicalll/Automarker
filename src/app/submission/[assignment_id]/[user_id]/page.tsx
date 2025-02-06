@@ -270,7 +270,7 @@ export default function SubmissionPage({
                       selectedFile ? (fileContents[selectedFile.id] || "Loading...") : "No file selected"
                     }
                     afterCode={""}
-                    language={selectedFile ? selectedFile.name.split('.')[1] : "text"}
+                    language={!selectedFile ? "text" : selectedFile.name.split('.')[1] === "h" ? "c" : selectedFile.name.split('.')[1]}
                     filename={selectedFile ? selectedFile.name : "No file selected"}
                     lightTheme="github-light"
                     darkTheme="github-dark"
