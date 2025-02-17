@@ -52,12 +52,33 @@ function parseUnittestOutput(output: string): TestResults {
   return { testsRun, failures, errors };
 }
 
+function parseGtimeOutput(output: string): { executionTime: number, memoryUsage: number } {
+  const timeRegex = /User time \(seconds\): (\d+\.\d+)/;
+  const memoryRegex = /Maximum resident set size \(kbytes\): (\d+)/;
+
+  const timeMatch = output.match(timeRegex);
+  const memoryMatch = output.match(memoryRegex);
+
+  if (!timeMatch || !memoryMatch) {
+    throw new Error("Failed to parse gtime output");
+  }
+
+  const executionTime = parseFloat(timeMatch[1]);
+  const memoryUsage = parseInt(memoryMatch[1], 10) / 1024;
+
+  return { executionTime, memoryUsage };
+}
+
+async function measureExecutionTimeAndMemory(command: string, cwd: string): Promise<{ executionTime: number, memoryUsage: number }> {
+  const { stdout, stderr } = await execAsync(command, { cwd });
+  return parseGtimeOutput(stderr);
+}
+
 async function getRootFolder(directory: string): Promise<string | null> {
   const contents = await fs.readdir(directory);
   const rootFolder = contents.find(name => !name.startsWith('.') && !name.startsWith('__'));
   return rootFolder ? rootFolder : null;
 }
-
 
 export async function POST(req: NextRequest) {
   const workDir = path.join(tmpdir(), uuidv4());
@@ -108,6 +129,19 @@ export async function POST(req: NextRequest) {
     testResult = await execAsync("python3 -m unittest discover tests", { cwd: submissionCWD });
     parsedResults = parseUnittestOutput(testResult.stdout + testResult.stderr);
 
+    let totalExecutionTime = 0;
+    let totalMemoryUsage = 0;
+    const runs = 10;
+
+    for (let i = 0; i < runs; i++) {
+      const { executionTime, memoryUsage } = await measureExecutionTimeAndMemory(`gtime -v python3 -m unittest discover tests`, submissionCWD);
+      totalExecutionTime += executionTime;
+      totalMemoryUsage += memoryUsage;
+    }
+
+    const avgExecutionTime = parseFloat((totalExecutionTime / runs).toFixed(3));
+    const avgMemoryUsage = parseFloat((totalMemoryUsage / runs).toFixed(3));
+
     return NextResponse.json({
       message: "Tests completed",
       output: testResult.stdout + testResult.stderr,
@@ -115,7 +149,9 @@ export async function POST(req: NextRequest) {
         run: parsedResults.testsRun,
         passed: parsedResults.testsRun - parsedResults.failures - parsedResults.errors,
         failed: parsedResults.failures,
-        errors: parsedResults.errors
+        errors: parsedResults.errors,
+        avgExecutionTime,
+        avgMemoryUsage
       }
     });
   } catch (error: any) {

@@ -72,7 +72,7 @@ function parseMavenOutput(output: string): TestResults | null {
 }
 
 function parseGtimeOutput(output: string): { executionTime: number, memoryUsage: number } {
-  const timeRegex = /Elapsed \(wall clock\) time \(h:mm:ss or m:ss\): (\d+):(\d+)\.(\d+)/;
+  const timeRegex = /User time \(seconds\): (\d+\.\d+)/;
   const memoryRegex = /Maximum resident set size \(kbytes\): (\d+)/;
 
   const timeMatch = output.match(timeRegex);
@@ -82,12 +82,8 @@ function parseGtimeOutput(output: string): { executionTime: number, memoryUsage:
     throw new Error("Failed to parse gtime output");
   }
 
-  const minutes = parseInt(timeMatch[1], 10);
-  const seconds = parseInt(timeMatch[2], 10);
-  const milliseconds = parseInt(timeMatch[3], 10);
-  const executionTime = (minutes * 60 + seconds) * 1000 + milliseconds; // convert to milliseconds
-
-  const memoryUsage = parseInt(memoryMatch[1], 10) / 1024; // convert to MB
+  const executionTime = parseFloat(timeMatch[1]);
+  const memoryUsage = parseInt(memoryMatch[1], 10) / 1024;
 
   return { executionTime, memoryUsage };
 }
@@ -179,8 +175,8 @@ export async function POST(req: NextRequest) {
       totalMemoryUsage += memoryUsage;
     }
 
-    const avgExecutionTime = totalExecutionTime / runs;
-    const avgMemoryUsage = parseFloat((totalMemoryUsage / runs).toFixed(3)); // round to 3 decimal places
+    const avgExecutionTime = parseFloat((totalExecutionTime / runs).toFixed(3));
+    const avgMemoryUsage = parseFloat((totalMemoryUsage / runs).toFixed(3));
 
     const parsedResults = parseMavenOutput(testResult.stdout);
 

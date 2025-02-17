@@ -288,7 +288,7 @@ export default function SubmissionPage({
                     <Badge className="h-[25px]" >Run: {results ? results.run : scores ? scores.tests_run : results.run}</Badge>
                     <Badge className="bg-green-400 h-[25px] hover:bg-green-300">Passed: {results ? results.passed : scores ? scores.tests_passed : results.passed}</Badge>
                     <Badge className="bg-red-600 h-[25px] text-white hover:bg-red-500">Failed: {results ? results.failed : scores ? scores.tests_failed : results.failed}</Badge>
-                    <Badge className="bg-blue-400 h-[25px] hover:bg-blue-300">Avg Execution Time: {results ? results.avgExecutionTime : scores ? scores.avg_execution_time : results.avgExecutionTime} ms</Badge>
+                    <Badge className="bg-blue-400 h-[25px] hover:bg-blue-300">Avg Execution Time: {results ? results.avgExecutionTime : scores ? scores.avg_execution_time : results.avgExecutionTime} s</Badge>
                     <Badge className="bg-purple-400 h-[25px] hover:bg-purple-300">Avg Max Memory Usage: {results ? results.avgMemoryUsage : scores ? scores.avg_memory_usage : results.avgMemoryUsage} MB</Badge>
                   </>
                 ) : ""}

@@ -91,7 +91,7 @@ export default function Leaderboard({ assignmentId, submissions }: LeaderboardPr
           </div>
         </button>
       ),
-      cell: ({ row }) => <div className="text-center">{row.getValue("avg_execution_time")} ms</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("avg_execution_time")} s</div>,
       enableSorting: true,
     },
     {
