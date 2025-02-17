@@ -15,7 +15,7 @@ export default function AssignmentsPage() {
 
   useEffect(() => {
     const fetchMyAssignments = async () => {
-      if (user && !myAssignments) {
+      if (user && myAssignments === null) {
         const { data, error } = await supabase
           .from("assignments")
           .select()
@@ -33,7 +33,7 @@ export default function AssignmentsPage() {
     };
 
     const fetchAssignedToMe = async () => {
-      if (user && !assignedToMe) {
+      if (user && assignedToMe === null) {
         const { data: groupData, error: groupError } = await supabase
           .from("groups")
           .select()
@@ -62,7 +62,7 @@ export default function AssignmentsPage() {
 
     fetchMyAssignments();
     fetchAssignedToMe();
-  }, [user]);
+  }, [user, myAssignments, assignedToMe]);
 
   return (
     <div className="w-full h-[95vh] flex flex-col p-6">

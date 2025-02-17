@@ -211,7 +211,7 @@ export default function SubmissionPage({
   useEffect(() => {
     downloadCode();
     getDetails();
-  }, [params]);
+  }, [params.assignment_id, params.user_id]);
 
   return (
     <>

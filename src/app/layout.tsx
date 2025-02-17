@@ -5,9 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { SideBar } from "@/components/sidebar";
 import ShineBorder from "@/components/ui/shine-border";
 import "./globals.css";
-import { useEffect, useState } from "react";
 import DockNav from "@/components/dock-nav";
-import { createClient } from "@/utils/supabase/client";
 import { UserProvider } from "@/components/context/user-context";
 
 export default function RootLayout({
@@ -15,34 +13,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // const [user, setUser] = useState<User | null>(null);
-  // const [name, setName] = useState<string | null>(null);
-  // const supabase = createClient();
-  //
-  // async function checkUser() {
-  //   const {
-  //     data: { user },
-  //   } = await supabase.auth.getUser();
-  //   if (user) {
-  //     setUser(user);
-  //     const { data } = await supabase
-  //       .from("profiles")
-  //       .select(`full_name`)
-  //       .eq("id", user?.id)
-  //       .single();
-  //     setName(data?.full_name);
-  //   } else {
-  //     setUser(null);
-  //   }
-  // }
-  //
-  // useEffect(() => {
-  //   const {} = supabase.auth.onAuthStateChange((event) => {
-  //     if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-  //       checkUser();
-  //     }
-  //   });
-  // }, []);
 
   return (
     <html lang="en" className={GeistSans.className} suppressHydrationWarning>

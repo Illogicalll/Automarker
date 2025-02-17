@@ -4,6 +4,7 @@ import { ColumnDef, flexRender, getCoreRowModel, getSortedRowModel, useReactTabl
 import { ArrowUpIcon, ArrowDownIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import Link from 'next/link';
 
 interface LeaderboardProps {
   assignmentId: string;
@@ -91,7 +92,7 @@ export default function Leaderboard({ assignmentId, submissions }: LeaderboardPr
           </div>
         </button>
       ),
-      cell: ({ row }) => <div className="text-center">{row.getValue("avg_execution_time")} s</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("avg_execution_time") ? row.getValue("avg_execution_time") : "?"} s</div>,
       enableSorting: true,
     },
     {
@@ -104,7 +105,7 @@ export default function Leaderboard({ assignmentId, submissions }: LeaderboardPr
           </div>
         </button>
       ),
-      cell: ({ row }) => <div className="text-center">{row.getValue("avg_memory_usage")} MB</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("avg_memory_usage") ? row.getValue("avg_memory_usage") : "?"} MB</div>,
       enableSorting: true,
     },
     {
@@ -112,10 +113,12 @@ export default function Leaderboard({ assignmentId, submissions }: LeaderboardPr
       header: () => <div className="text-center">View Submission</div>,
       cell: ({ row }) => {
         return (
-          <div className="flex justify-center items-center" onClick={() => {window.location.pathname = "/submission/" + assignmentId + "/" + row.getValue("user_id")}}>
-            <Button>
-              <p>View</p>
-            </Button>
+          <div className="flex justify-center items-center">
+            <Link href={`/submission/${assignmentId}/${row.getValue("user_id")}`}>
+              <Button>
+                <p>View</p>
+              </Button>
+            </Link>
           </div>
         );
       },

@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { ColumnDef, SortingState, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { Cross2Icon, CheckIcon, ArrowUpIcon, ArrowDownIcon } from "@radix-ui/react-icons";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import Link from "next/link";
 
 interface ViewSubmissionsProps {
   isOpen: boolean;
@@ -159,10 +160,12 @@ export default function ViewSubmissions({ isOpen, setIsOpen, params, assignedTo 
       header: () => <div className="text-center">View Code</div>,
       cell: ({ row }) => {
         return (
-          <div className="flex justify-center items-center" onClick={() => {window.location.pathname = "/submission/" + params.id + "/" + users.find(e => e.name === row.getValue("name"))?.id}}>
-            <Button disabled={!row.getValue("submitted")}>
-              <p>View</p>
-            </Button>
+          <div className="flex justify-center items-center">
+            <Link href={`/submission/${params.id}/${users.find(e => e.name === row.getValue("name"))?.id}`}>
+              <Button disabled={!row.getValue("submitted")}>
+                <p>View</p>
+              </Button>
+            </Link>
           </div>
         );
       },

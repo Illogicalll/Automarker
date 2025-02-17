@@ -18,6 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import Link from 'next/link';
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -202,10 +203,6 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleViewSubmission = () => {
-    window.location.pathname = `/submission/${params.id}/${user?.id}`;
-  }
-
   return (
     <div className="w-full h-[95vh] flex flex-col p-6 gap-5">
       {assignment ? (
@@ -263,11 +260,11 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
               </div>
             </>
             ) : assignment && hasSubmitted ? (
-              <div onClick={handleViewSubmission}>
+              <Link href={"/submission/" + params.id + "/" + user?.id}>
                 <ShinyButton className="h-[44px] w-[200px]">
                   <p className="mt-[3px]">View Submission</p>
                 </ShinyButton>
-              </div>
+              </Link>
             ) : assignment && !hasSubmitted ? (
               <div onClick={handleCodeSubmission}>
                 <ShinyButton className="h-[44px] w-[200px]">
