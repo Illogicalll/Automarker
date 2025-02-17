@@ -71,6 +71,32 @@ function parseMavenOutput(output: string): TestResults | null {
   return null;
 }
 
+function parseGtimeOutput(output: string): { executionTime: number, memoryUsage: number } {
+  const timeRegex = /Elapsed \(wall clock\) time \(h:mm:ss or m:ss\): (\d+):(\d+)\.(\d+)/;
+  const memoryRegex = /Maximum resident set size \(kbytes\): (\d+)/;
+
+  const timeMatch = output.match(timeRegex);
+  const memoryMatch = output.match(memoryRegex);
+
+  if (!timeMatch || !memoryMatch) {
+    throw new Error("Failed to parse gtime output");
+  }
+
+  const minutes = parseInt(timeMatch[1], 10);
+  const seconds = parseInt(timeMatch[2], 10);
+  const milliseconds = parseInt(timeMatch[3], 10);
+  const executionTime = (minutes * 60 + seconds) * 1000 + milliseconds; // convert to milliseconds
+
+  const memoryUsage = parseInt(memoryMatch[1], 10) / 1024; // convert to MB
+
+  return { executionTime, memoryUsage };
+}
+
+async function measureExecutionTimeAndMemory(command: string, cwd: string): Promise<{ executionTime: number, memoryUsage: number }> {
+  const { stdout, stderr } = await execAsync(command, { cwd });
+  return parseGtimeOutput(stderr);
+}
+
 export async function POST(req: NextRequest) {
   const workDir = path.join(tmpdir(), uuidv4());
   const modelSolutionDir = path.join(workDir, "modelSolution");
@@ -133,6 +159,29 @@ export async function POST(req: NextRequest) {
       cwd: path.join(submissionDir, rootFolderName)
     });
 
+    const otherResult = await execAsync("mvn clean package", {
+      cwd: path.join(submissionDir, rootFolderName)
+    });
+
+    const jarFiles = await fs.readdir(path.join(submissionDir, rootFolderName, "target"));
+    const jarFile = jarFiles.find(file => file.endsWith(".jar"));
+    if (!jarFile) {
+      throw new Error("No JAR file found in target directory");
+    }
+
+    let totalExecutionTime = 0;
+    let totalMemoryUsage = 0;
+    const runs = 10;
+
+    for (let i = 0; i < runs; i++) {
+      const { executionTime, memoryUsage } = await measureExecutionTimeAndMemory(`gtime -v java -jar target/${jarFile}`, path.join(submissionDir, rootFolderName));
+      totalExecutionTime += executionTime;
+      totalMemoryUsage += memoryUsage;
+    }
+
+    const avgExecutionTime = totalExecutionTime / runs;
+    const avgMemoryUsage = parseFloat((totalMemoryUsage / runs).toFixed(3)); // round to 3 decimal places
+
     const parsedResults = parseMavenOutput(testResult.stdout);
 
     return NextResponse.json({
@@ -142,7 +191,9 @@ export async function POST(req: NextRequest) {
         run: parsedResults.testsRun,
         passed: parsedResults.testsRun - parsedResults.failures - parsedResults.errors,
         failed: parsedResults.failures,
-        skipped: parsedResults.skipped
+        skipped: parsedResults.skipped,
+        avgExecutionTime,
+        avgMemoryUsage
       } : null
     });
 

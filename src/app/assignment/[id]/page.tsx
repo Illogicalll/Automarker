@@ -11,6 +11,13 @@ import ShinyButton from "@/components/ui/shiny-button";
 import EditAssignment from "@/components/edit-assignment";
 import ViewSubmissions from "@/components/view-submissions";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import Leaderboard from "@/components/leaderboard";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -30,6 +37,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [assignedTo, setAssignedTo] = useState<number | null>(null);
+  const [submissions, setSubmissions] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -118,9 +126,24 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     }
   }, [user, assignment]);
 
-  function delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      const { data, error } = await supabase
+        .from("submissions")
+        .select("user_id, tests_run, tests_passed, tests_failed, avg_execution_time, avg_memory_usage")
+        .eq("assignment_id", params.id);
+      if (data) {
+        const transformedData = data.map((submission: any) => ({
+          user_id: submission.user_id,
+          has_passed_tests: submission.tests_run === submission.tests_passed,
+          avg_execution_time: submission.avg_execution_time,
+          avg_memory_usage: submission.avg_memory_usage,
+        }));
+        setSubmissions(transformedData);
+      }
+    };
+    fetchSubmissions();
+  }, [params.id]);
 
   const handleDownload = async () => {
     setDownloadStatus(true);
@@ -179,6 +202,10 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     }
   };
 
+  const handleViewSubmission = () => {
+    window.location.pathname = `/submission/${params.id}/${user?.id}`;
+  }
+
   return (
     <div className="w-full h-[95vh] flex flex-col p-6 gap-5">
       {assignment ? (
@@ -236,9 +263,11 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
               </div>
             </>
             ) : assignment && hasSubmitted ? (
-              <ShinyButton className="h-[44px] w-[200px]">
-                <p className="mt-[3px]">Submitted</p>
-              </ShinyButton>
+              <div onClick={handleViewSubmission}>
+                <ShinyButton className="h-[44px] w-[200px]">
+                  <p className="mt-[3px]">View Submission</p>
+                </ShinyButton>
+              </div>
             ) : assignment && !hasSubmitted ? (
               <div onClick={handleCodeSubmission}>
                 <ShinyButton className="h-[44px] w-[200px]">
@@ -258,33 +287,46 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
             )}
           </div>
           <p>{assignment?.problem}</p>
-          {downloadedSkeleton && !isZip ? (
-            <div className="pb-5">
-              <CodeComparison
-                beforeCode={downloadedSkeleton}
-                afterCode={""}
-                language={assignment?.language}
-                filename="Skeleton Code"
-                lightTheme="github-light"
-                darkTheme="github-dark"
-              />
-            </div>
-          ) : downloadedSkeleton ? (
-            <div className="pb-5">
-              <CodeComparison
-                beforeCode={
-                  ".zip file format not supported, please download the file to view"
-                }
-                afterCode={""}
-                language={"text"}
-                filename="Skeleton Code"
-                lightTheme="github-light"
-                darkTheme="github-dark"
-              />
-            </div>
-          ) : (
-            ""
-          )}
+          <Accordion type="multiple">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Skeleton Code</AccordionTrigger>
+              <AccordionContent>
+                {downloadedSkeleton && !isZip ? (
+                  <div className="pb-5">
+                    <CodeComparison
+                      beforeCode={downloadedSkeleton}
+                      afterCode={""}
+                      language={assignment?.language}
+                      filename="Skeleton Code"
+                      lightTheme="github-light"
+                      darkTheme="github-dark"
+                    />
+                  </div>
+                ) : downloadedSkeleton ? (
+                  <div>
+                    <CodeComparison
+                      beforeCode={
+                        ".zip file format not supported, please download the file to view"
+                      }
+                      afterCode={""}
+                      language={"text"}
+                      filename="Skeleton Code"
+                      lightTheme="github-light"
+                      darkTheme="github-dark"
+                    />
+                  </div>
+                ) : (
+                  ""
+                )}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>Leaderboard</AccordionTrigger>
+              <AccordionContent>
+                <Leaderboard assignmentId={params.id} submissions={submissions} />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
           <EditAssignment params={params} isOpen={isOpen} setIsOpen={setIsOpen} groups={groups} existingProblemStatement={problemStatement} setup={isSetup} isEditing={isEditing} />
           <ViewSubmissions isOpen={isOpen2} setIsOpen={setIsOpen2} params={params} assignedTo={assignedTo} />
         </>

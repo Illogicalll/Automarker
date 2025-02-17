@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import JSZip from "jszip";
 import { File, Folder, Tree } from "@/components/ui/file-tree";
 import CodeComparison from "@/components/ui/code-comparison";
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/accordion";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useUserContext } from "@/components/context/user-context";
 
 interface FileNode {
   id: string;
@@ -31,6 +33,7 @@ export default function SubmissionPage({
   params: { assignment_id: string; user_id: string };
 }) {
   const supabase = createClient();
+  const { user } = useUserContext();
   const [fileTree, setFileTree] = useState<FolderNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileNode | null>(null);
   const [fileContents, setFileContents] = useState<{ [key: string]: string }>({});
@@ -43,7 +46,8 @@ export default function SubmissionPage({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<any>(undefined);
   const [scores, setScores] = useState<any>(undefined);
-  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const downloadCode = async () => {
     setProgress(60);
     const { data, error } = await supabase.storage
@@ -145,7 +149,7 @@ export default function SubmissionPage({
       }
     const { data: scores, error: scoresError } = await supabase
       .from("submissions")
-      .select("tests_run, tests_passed, tests_failed")
+      .select("tests_run, tests_passed, tests_failed, avg_execution_time, avg_memory_usage")
       .eq("assignment_id", params.assignment_id)
       .eq("user_id", params.user_id);
       if (scores) {
@@ -162,8 +166,29 @@ export default function SubmissionPage({
         tests_run: scores.run,
         tests_passed: scores.passed,
         tests_failed: scores.failed,
-    }])
+        avg_execution_time: scores.avgExecutionTime,
+        avg_memory_usage: scores.avgMemoryUsage,
+      }])
+      .eq("assignment_id", params.assignment_id)
+      .eq("user_id", params.user_id)
   }
+
+  const handleCodeSubmission = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleCodeChange = async (event: any) => {
+    const file = event.target.files && event.target.files[0];
+    const filename = params.assignment_id + "/" + params.user_id;
+    if (file) {
+      const { data, error } = await supabase.storage
+        .from("submissions")
+        .upload(filename, file, { upsert: true });
+      window.location.reload();
+    }
+  };
 
   function exploreTree(folder: FolderNode, handleFileSelection: (file: FileNode) => void) {
     return folder.children?.map((child: FileNode) => {
@@ -193,13 +218,27 @@ export default function SubmissionPage({
     {fileTree.length !== 0 && username && assignmentName ? (
         <div className="w-full h-[95vh] flex flex-col p-6 gap-5">
           <h1 className="text-4xl font-bold">{username}'s submission for {assignmentName}</h1>
+          {user?.id === params.user_id && (
+            <div className="mt-4">
+              <Button onClick={handleCodeSubmission}>
+                <p>Re-upload Submission</p>
+              </Button>
+              <input
+                type="file"
+                accept=".zip"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleCodeChange}
+              />
+            </div>
+          )}
           <Accordion type="multiple">
             <AccordionItem value="item-1">
               <AccordionTrigger>Testing</AccordionTrigger>
               <AccordionContent className={isLoading ? "blur-sm rounded-sm transition-all cursor-default" : "transition-all"}>
                 <div className="w-full pb-5">
                   <CodeComparison
-                    beforeCode={testOutput ? testOutput : scores ? "Test output is not stored, only the results. Re-run the tests to see the output" : "Tests have not been run yet. Click the button below to see test output here."}
+                    beforeCode={testOutput ? testOutput : scores ? "Test output is not stored, only the results. Re-run the tests to see the output here." : "Tests have not been run yet. Click the button below to see test output here."}
                     afterCode={""}
                     language={"text"}
                     filename={"Test Results"}
@@ -246,9 +285,11 @@ export default function SubmissionPage({
                 </InteractiveHoverButton>
                 {results || scores ? (
                   <>
-                    <Badge className="h-[25px]" >Run: {scores ? scores.tests_run : results.run}</Badge>
-                    <Badge className="bg-green-400 h-[25px] hover:bg-green-300">Passed: {scores ? scores.tests_passed : results.passed}</Badge>
-                    <Badge className="bg-red-600 h-[25px] text-white hover:bg-red-500">Failed: {scores ? scores.tests_failed : results.failed}</Badge>
+                    <Badge className="h-[25px]" >Run: {results ? results.run : scores ? scores.tests_run : results.run}</Badge>
+                    <Badge className="bg-green-400 h-[25px] hover:bg-green-300">Passed: {results ? results.passed : scores ? scores.tests_passed : results.passed}</Badge>
+                    <Badge className="bg-red-600 h-[25px] text-white hover:bg-red-500">Failed: {results ? results.failed : scores ? scores.tests_failed : results.failed}</Badge>
+                    <Badge className="bg-blue-400 h-[25px] hover:bg-blue-300">Avg Execution Time: {results ? results.avgExecutionTime : scores ? scores.avg_execution_time : results.avgExecutionTime} ms</Badge>
+                    <Badge className="bg-purple-400 h-[25px] hover:bg-purple-300">Avg Max Memory Usage: {results ? results.avgMemoryUsage : scores ? scores.avg_memory_usage : results.avgMemoryUsage} MB</Badge>
                   </>
                 ) : ""}
                 </div>
