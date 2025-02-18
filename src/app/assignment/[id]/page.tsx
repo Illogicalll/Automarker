@@ -19,6 +19,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Link from 'next/link';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -26,6 +28,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const { user, name } = useUserContext();
   const [isOpen, setIsOpen] = useState(false);
   const [isOpen2, setIsOpen2] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [downloadedSkeleton, setDownloadedSkeleton] = useState<any>(null);
   const [isSetup, setIsSetup] = useState(false);
   const [rawSkeleton, setRawSkeleton] = useState<any>(null);
@@ -36,9 +39,11 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const [isEditing, setIsEditing] = useState(false);
   const [groups, setGroups] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [assignedTo, setAssignedTo] = useState<number | null>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [confirmAssignmentName, setConfirmAssignmentName] = useState<string>("");
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -203,6 +208,25 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (confirmAssignmentName === assignment.title) {
+      setLoading(true);
+      const { error } = await supabase
+        .from("assignments")
+        .delete()
+        .eq("id", params.id);
+
+      if (error) {
+        console.error("Error deleting assignment:", error);
+      } else {
+        window.location.href = "/assignments";
+      }
+      setLoading(false);
+    } else {
+      alert("Assignment name does not match. Please type the correct assignment name to confirm.");
+    }
+  };
+
   return (
     <div className="w-full h-[95vh] flex flex-col p-6 gap-5">
       {assignment ? (
@@ -249,16 +273,26 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                   </ShinyButton>
                 </div>
                 <div
-                onClick={() => {
-                  setIsOpen2(true);
-                }}
-                className="h-[44px] w-[200px]"
-              >
-                <ShinyButton className="h-[44px] w-[200px]">
-                  <p className="mt-[3px]">View Submissions</p>
-                </ShinyButton>
-              </div>
-            </>
+                  onClick={() => {
+                    setIsOpen2(true);
+                  }}
+                  className="h-[44px] w-[200px]"
+                >
+                  <ShinyButton className="h-[44px] w-[200px]">
+                    <p className="mt-[3px]">View Submissions</p>
+                  </ShinyButton>
+                </div>
+                <div
+                  onClick={() => {
+                    setIsDeleteOpen(true);
+                  }}
+                  className="h-[44px] w-[200px]"
+                >
+                  <ShinyButton className="h-[44px] w-[200px] bg-red-600 text-white hover:bg-red-900">
+                    <p className="mt-[3px]">Delete Assignment</p>
+                  </ShinyButton>
+                </div>
+              </>
             ) : assignment && hasSubmitted ? (
               <Link href={"/submission/" + params.id + "/" + user?.id}>
                 <ShinyButton className="h-[44px] w-[200px]">
@@ -326,6 +360,40 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
           </Accordion>
           <EditAssignment params={params} isOpen={isOpen} setIsOpen={setIsOpen} groups={groups} existingProblemStatement={problemStatement} setup={isSetup} isEditing={isEditing} />
           <ViewSubmissions isOpen={isOpen2} setIsOpen={setIsOpen2} params={params} assignedTo={assignedTo} />
+
+          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <DialogTrigger className="outline-none focus:outline-none hover:outline-none"></DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Delete Assignment</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this assignment? This action cannot be undone.
+                  Please type the assignment name to confirm.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-6">
+                <Input
+                  type="text"
+                  placeholder="Type assignment name to confirm"
+                  value={confirmAssignmentName}
+                  onChange={(e) => setConfirmAssignmentName(e.target.value)}
+                  required
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  className="bg-red-600 text-white hover:bg-red-900"
+                  onClick={handleDelete}
+                  disabled={loading || confirmAssignmentName !== assignment.title}
+                >
+                  {loading ? "Deleting..." : "Delete"}
+                </Button>
+                <Button onClick={() => setIsDeleteOpen(false)}>
+                  <p>Cancel</p>
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       ) : (
         <div className="flex h-full justify-center items-center">
