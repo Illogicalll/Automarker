@@ -16,6 +16,7 @@ import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useUserContext } from "@/components/context/user-context";
+import AiChat from "@/components/ai-chat";
 
 interface FileNode {
   id: string;
@@ -46,6 +47,7 @@ export default function SubmissionPage({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<any>(undefined);
   const [scores, setScores] = useState<any>(undefined);
+  const [assignmentProblem, setAssignmentProblem] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const downloadCode = async () => {
@@ -155,6 +157,13 @@ export default function SubmissionPage({
       if (scores) {
         setScores(scores[0])
       }
+    const { data: assignmentProblem, error: assignmentPError } = await supabase
+      .from("assignments")
+      .select("problem")
+      .eq("id", params.assignment_id);
+    if (assignmentProblem) {
+      setAssignmentProblem(assignmentProblem[0].problem);
+    }
   }
 
   const updateScore = async (scores: any) => {
@@ -316,6 +325,14 @@ export default function SubmissionPage({
                     lightTheme="github-light"
                     darkTheme="github-dark"
                   />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3" >
+              <AccordionTrigger>Feedback and Assistance</AccordionTrigger>
+              <AccordionContent>
+                <div className="pb-5 flex flex-col">
+                  <AiChat currentlyOpenFile={selectedFile ? fileContents[selectedFile.id] : ""} taskDescription={assignmentProblem ? assignmentProblem : ""} />
                 </div>
               </AccordionContent>
             </AccordionItem>

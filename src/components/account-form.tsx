@@ -53,13 +53,13 @@ export default function AccountForm() {
                 <Mail className="inline" size={25} />
               </label>
               <p className="inline border border-x-0 border-t-0 border-b-gray-500 text-gray-500">
-                {user.email}
+                {user?.email}
               </p>
               <input
                 className="hidden"
                 id="email"
                 type="text"
-                value={user.email}
+                value={user?.email}
                 disabled
               />
             </div>
