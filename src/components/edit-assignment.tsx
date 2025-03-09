@@ -1,4 +1,3 @@
-import page from "@/app/page";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -15,6 +14,7 @@ import { useEffect, useState } from "react";
 import { useUserContext } from "./context/user-context";
 import { createClient } from "@/utils/supabase/client";
 import { DateTimePicker } from "./ui/date-time";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 
 interface EditAssignmentProps {
   params: { id: string };
@@ -38,6 +38,8 @@ export default function EditAssignment({ params, isOpen, setIsOpen, groups, exis
   const [skeletonCode, setSkeletonCode] = useState<any>(null);
   const [isZip, setIsZip] = useState(false);
   const [dueDate, setDueDate] = useState<Date | undefined>(existingDueDate);
+  const [isHelpDialogOpen, setIsHelpDialogOpen] = useState<boolean>(false);
+  const [helpLanguage, setHelpLanguage] = useState<string>("python");
 
   useEffect(() => {
     if (existingProblemStatement !== null && existingProblemStatement !== undefined) {
@@ -118,7 +120,8 @@ export default function EditAssignment({ params, isOpen, setIsOpen, groups, exis
   };
 
   return (
-    <Dialog open={isOpen}>
+    <>
+      <Dialog open={isOpen}>
         <DialogTrigger className="outline-none focus:outline-none hover:outline-none"></DialogTrigger>
         <form onSubmit={handleSubmit}>
           <DialogContent
@@ -187,7 +190,12 @@ export default function EditAssignment({ params, isOpen, setIsOpen, groups, exis
                       AutoAssign will use these tests to automatically grade student submissions. For a guide on what to upload,
                     </p>
                     &nbsp;
-                    <p className="text-sm text-white underline inline-block z-50 cursor-pointer hover:text-gray-400">click here</p>.
+                    <p 
+                      className="text-sm text-white underline inline-block z-50 cursor-pointer hover:text-gray-400"
+                      onClick={() => setIsHelpDialogOpen(true)}
+                    >
+                      click here
+                    </p>.
                   </div>
                   <Input
                     id="model_solution"
@@ -298,5 +306,148 @@ export default function EditAssignment({ params, isOpen, setIsOpen, groups, exis
           </DialogContent>
         </form>
       </Dialog>
-  )
+
+      <Dialog open={isHelpDialogOpen} onOpenChange={setIsHelpDialogOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Test File Requirements</DialogTitle>
+            <DialogDescription>
+              Learn what to upload for different programming languages
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <Tabs defaultValue="python" value={helpLanguage} onValueChange={setHelpLanguage} className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger 
+                  value="python" 
+                  className={`relative pb-2 ${helpLanguage === "python" ? "after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-primary" : ""}`}
+                >
+                  Python
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="java" 
+                  className={`relative pb-2 ${helpLanguage === "java" ? "after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-primary" : ""}`}
+                >
+                  Java
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="c" 
+                  className={`relative pb-2 ${helpLanguage === "c" ? "after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-primary" : ""}`}
+                >
+                  C
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="python" className="mt-6">
+                <div className="space-y-4">
+                  <h3 className="font-medium text-lg">Python Test Requirements</h3>
+                  <p>Tests for Python assignments should be of the following format using the <code>unittest</code> library</p>
+                  <div className="bg-slate-800 p-4 rounded-md">
+                    <pre className="text-sm text-white overflow-auto">
+                      {`import unittest
+from solution import my_function
+
+class TestSolution(unittest.TestCase):
+    def test_basic_case(self):
+        self.assertEqual(my_function(5), 25)
+        
+    def test_edge_case(self):
+        self.assertEqual(my_function(0), 0)
+        
+if __name__ == '__main__':
+    unittest.main()`}
+                    </pre>
+                  </div>
+                  <p>Make sure they are contained within a <code>/tests</code> folder placed in the root directory of your project</p>
+                  <p>When uploading, simply zip your root/src directory of the project and upload it</p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="java" className="mt-6">
+                <div className="space-y-4">
+                  <h3 className="font-medium text-lg">Java Test Requirements</h3>
+                  <div className="mt-8 bg-amber-100 dark:bg-amber-950 pt-[9px] pb-1 rounded-md text-center">
+                    <h4 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">Only Maven projects are currently supported</h4>
+                  </div>
+                  <p>Tests should be written with the <code>junit</code> library</p>
+                  <div className="bg-slate-800 p-4 rounded-md">
+                    <pre className="text-sm text-white overflow-auto">
+                      {`import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class SolutionTest {
+    @Test
+    public void testBasicCase() {
+        assertEquals(25, Solution.myFunction(5));
+    }
+    
+    @Test
+    public void testEdgeCase() {
+        assertEquals(0, Solution.myFunction(0));
+    }
+}`}
+                    </pre>
+                  </div>
+                  <p>Test files for Java assignments should be in a <code>/test/java</code> folder in the root directory of your project</p>
+                  <p>When submitting, zip just the <code>test</code> folder and upload it</p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="c" className="mt-6">
+                <div className="space-y-4">
+                  <h3 className="font-medium text-lg">C Test Requirements</h3>
+                  <p>Tests for C assignments should be written with the <code>CUnit</code> library</p>
+                  <div className="bg-slate-800 p-4 rounded-md">
+                    <pre className="text-sm text-white overflow-auto">
+                      {`#include <CUnit/CUnit.h>
+#include <CUnit/Basic.h>
+// other imports
+
+char* capture_output(void (*func)()) {
+    // capture stdout
+}
+
+void test_print_hello_world() {
+    char* output = capture_output(print_hello_world);
+    CU_ASSERT_STRING_EQUAL(output, "Hello, World!");
+    free(output);
+}
+
+int main() {
+    if (CU_initialize_registry() != CUE_SUCCESS) {
+        return CU_get_error();
+    }
+    CU_pSuite suite = CU_add_suite("HelloWorldSuite", NULL, NULL);
+    if (suite == NULL) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+    if (CU_add_test(suite, "test_print_hello_world",
+    test_print_hello_world) == NULL) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+    CU_basic_set_mode(CU_BRM_VERBOSE);
+    CU_basic_run_tests();
+    CU_cleanup_registry();
+    return CU_get_error();
+}
+`}
+                    </pre>
+                  </div>
+                  <p>Test files should be placed in a <code>/tests</code> folder in the root directory of the project</p>
+                  <p>When uploading the files, zip your entire project directory</p>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => setIsHelpDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
