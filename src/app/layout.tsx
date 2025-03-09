@@ -7,6 +7,7 @@ import ShineBorder from "@/components/ui/shine-border";
 import "./globals.css";
 import DockNav from "@/components/dock-nav";
 import { UserProvider } from "@/components/context/user-context";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function RootLayout({
   children,
@@ -43,6 +44,7 @@ export default function RootLayout({
               </div>
             </main>
           </ThemeProvider>
+          <Toaster />
         </body>
       </UserProvider>
     </html>

@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { toast } from "@/components/ui/use-toast";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -210,11 +211,102 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const handleCodeChange = async (event: any) => {
     const file = event.target.files && event.target.files[0];
     const filename = params.id + "/" + user?.id;
+    
     if (file) {
-      const { data, error } = await supabase.storage
-        .from("submissions")
-        .upload(filename, file, { upsert: true });
-      window.location.reload();
+      setLoading(true);
+      
+      try {
+        const { data, error } = await supabase.storage
+          .from("submissions")
+          .upload(filename, file, { upsert: true });
+          
+        if (error) {
+          console.error("Error uploading submission:", error);
+          toast({
+            title: "Error uploading submission",
+            description: "Please try again later.",
+            variant: "destructive",
+            duration: 5000,
+          });
+          setLoading(false);
+          return;
+        }
+        
+        const { data: assignmentData } = await supabase
+          .from("assignments")
+          .select("language")
+          .eq("id", params.id)
+          .single();
+          
+        if (!assignmentData) {
+          toast({
+            title: "Submission uploaded",
+            description: "Your code was submitted successfully, but automatic test execution failed.",
+            duration: 5000,
+          });
+          window.location.href = `/submission/${params.id}/${user?.id}`;
+          return;
+        }
+        
+        const formData = new FormData();
+        formData.append("submissionZip", file);
+        formData.append("assignment_id", params.id);
+        
+        toast({
+          title: "Submission received",
+          description: "Running tests automatically... Leaving this page will terminate the process.",
+          duration: 5000,
+        });
+        
+        const response = await fetch(`/api/execute-${assignmentData.language}`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          console.error("Failed to execute tests:", response.statusText);
+          toast({
+            title: "Tests failed to run",
+            description: "Your submission was uploaded but tests couldn't be executed automatically.",
+            variant: "destructive",
+            duration: 5000,
+          });
+          window.location.href = `/submission/${params.id}/${user?.id}`;
+          return;
+        }
+        
+        const result = await response.json();
+        
+        await supabase
+          .from("submissions")
+          .upsert([{
+            assignment_id: params.id,
+            user_id: user?.id,
+            tests_run: result.results.run,
+            tests_passed: result.results.passed,
+            tests_failed: result.results.failed,
+            avg_execution_time: result.results.avgExecutionTime,
+            avg_memory_usage: result.results.avgMemoryUsage,
+          }]);
+        
+        toast({
+          title: "Tests completed",
+          description: `Passed: ${result.results.passed}/${result.results.run} tests`,
+          duration: 5000,
+        });
+        
+        window.location.href = `/submission/${params.id}/${user?.id}`;
+        
+      } catch (error) {
+        console.error("Error processing submission:", error);
+        toast({
+          title: "Error processing submission",
+          description: "Your file was uploaded but we couldn't run the tests automatically.",
+          variant: "destructive",
+          duration: 5000,
+        });
+        setLoading(false);
+      }
     }
   };
 
@@ -225,7 +317,6 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
         .from("assignments")
         .delete()
         .eq("id", params.id);
-
       if (error) {
         console.error("Error deleting assignment:", error);
       } else {
@@ -309,7 +400,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                   <p className="mt-[3px]">View Submission</p>
                 </ShinyButton>
               </Link>
-            ) : assignment && !hasSubmitted ? (
+            ) : assignment && !hasSubmitted && !isOwner ? (
               <div onClick={handleCodeSubmission}>
                 <ShinyButton className="h-[44px] w-[200px]">
                   <p className="mt-[3px]">Submit Solution</p>
