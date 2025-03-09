@@ -21,6 +21,7 @@ import {
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -44,6 +45,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const [assignedTo, setAssignedTo] = useState<number | null>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [confirmAssignmentName, setConfirmAssignmentName] = useState<string>("");
+  const [dueDatePassed, setDueDatePassed] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -78,6 +80,14 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
         setProblemStatement(data[0].problem);
         setIsSetup(data[0].setup);
         setAssignedTo(data[0].assigned_to);
+        
+        // Check if due date has passed
+        if (data[0].due_date) {
+          const dueDate = new Date(data[0].due_date);
+          const currentDate = new Date();
+          setDueDatePassed(currentDate > dueDate);
+        }
+        
         if (data[0].setup === true) {
           fetchFiles();
         }
@@ -354,11 +364,58 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
             <AccordionItem value="item-2">
               <AccordionTrigger>Leaderboard</AccordionTrigger>
               <AccordionContent>
-                <Leaderboard assignmentId={params.id} submissions={submissions} />
+                {isOwner || dueDatePassed ? (
+                  <Leaderboard assignmentId={params.id} submissions={submissions} />
+                ) : (
+                  <div className="relative my-4">
+                    <div className="filter blur-sm opacity-50">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="py-2 text-left">Rank</th>
+                            <th className="py-2 text-left">Name</th>
+                            <th className="py-2 text-left">Score</th>
+                            <th className="py-2 text-left">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...Array(5)].map((_, i) => (
+                            <tr key={i} className="border-b">
+                              <td className="py-3">{i + 1}</td>
+                              <td className="py-3">Student Name</td>
+                              <td className="py-3">100%</td>
+                              <td className="py-3">0.5s</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Card className="p-4 w-3/4 max-w-md">
+                        <CardHeader>
+                          <h3 className="text-lg font-medium">Leaderboard not available yet</h3>
+                        </CardHeader>
+                        <CardContent>
+                          <p>The leaderboard will be visible after the assignment due date:</p>
+                          <p className="font-semibold mt-2">{assignment?.due_date ? new Date(assignment.due_date).toLocaleString() : 'Date not specified'}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                )}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-          <EditAssignment params={params} isOpen={isOpen} setIsOpen={setIsOpen} groups={groups} existingProblemStatement={problemStatement} setup={isSetup} isEditing={isEditing} />
+          <EditAssignment 
+            params={params} 
+            isOpen={isOpen} 
+            setIsOpen={setIsOpen} 
+            groups={groups} 
+            existingProblemStatement={problemStatement} 
+            setup={isSetup} 
+            isEditing={isEditing} 
+            existingDueDate={assignment?.due_date ? new Date(assignment.due_date) : undefined} 
+          />
           <ViewSubmissions isOpen={isOpen2} setIsOpen={setIsOpen2} params={params} assignedTo={assignedTo} />
 
           <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>

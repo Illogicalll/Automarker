@@ -14,6 +14,7 @@ import { Textarea } from "./ui/textarea";
 import { useEffect, useState } from "react";
 import { useUserContext } from "./context/user-context";
 import { createClient } from "@/utils/supabase/client";
+import { DateTimePicker } from "./ui/date-time";
 
 interface EditAssignmentProps {
   params: { id: string };
@@ -23,9 +24,10 @@ interface EditAssignmentProps {
   existingProblemStatement: any,
   setup: boolean;
   isEditing: boolean;
+  existingDueDate?: Date;
 }
 
-export default function EditAssignment({ params, isOpen, setIsOpen, groups, existingProblemStatement, setup, isEditing }: EditAssignmentProps) {
+export default function EditAssignment({ params, isOpen, setIsOpen, groups, existingProblemStatement, setup, isEditing, existingDueDate }: EditAssignmentProps) {
   const [assignees, setAssignees] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -35,12 +37,16 @@ export default function EditAssignment({ params, isOpen, setIsOpen, groups, exis
   const [modelSolution, setModelSolution] = useState<any>(null);
   const [skeletonCode, setSkeletonCode] = useState<any>(null);
   const [isZip, setIsZip] = useState(false);
+  const [dueDate, setDueDate] = useState<Date | undefined>(existingDueDate);
 
   useEffect(() => {
     if (existingProblemStatement !== null && existingProblemStatement !== undefined) {
       setProblemStatement(existingProblemStatement);
     }
-  }, [existingProblemStatement]);
+    if (existingDueDate !== null && existingDueDate !== undefined) {
+      setDueDate(new Date(existingDueDate));
+    }
+  }, [existingProblemStatement, existingDueDate]);
   
   const handleSubmit = async () => {
     if (assignees === null) {
@@ -72,15 +78,24 @@ export default function EditAssignment({ params, isOpen, setIsOpen, groups, exis
   const handleSubmit2 = async () => {
     if (user) {
       setLoading(true);
+      
+      const updateData: any = {
+        setup: true
+      };
+      
+      if (problemStatement) {
+        updateData.problem = problemStatement;
+      }
+      
+      if (dueDate) {
+        updateData.due_date = dueDate.toISOString();
+      }
+      
       const { data, error } = await supabase
         .from("assignments")
-        .update([
-          {
-            problem: problemStatement,
-            setup: true,
-          },
-        ])
+        .update(updateData)
         .eq("id", params.id);
+
       if (modelSolution !== null) {
         const { data, error } = await supabase.storage
           .from("model_solutions")
@@ -226,6 +241,15 @@ export default function EditAssignment({ params, isOpen, setIsOpen, groups, exis
                     rows={10}
                     onChange={(e) => setProblemStatement(e.target.value)}
                   />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="due_date" className="cursor-pointer font-bold">
+                    Due Date
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    When the assignment is due
+                  </p>
+                  <DateTimePicker value={dueDate} onChange={setDueDate} />
                 </div>
               </div>
             )}
