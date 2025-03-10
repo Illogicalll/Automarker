@@ -5,7 +5,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Input } from "./ui/input";
 
-const client = new HfInference(process.env.HF_API_KEY);
+const client = new HfInference(process.env.NEXT_PUBLIC_HF_API_KEY);
 
 const sendMessage = async (message: string) => {
   const chatCompletion = await client.chatCompletion({
