@@ -12,6 +12,26 @@ export default function AccountForm() {
   const [loading, setLoading] = useState(false);
   const [fullname, setFullname] = useState(name);
   const [avatar_url, setAvatarUrl] = useState<string | null>(null);
+  const [isAnonymous, setIsAnonymous] = useState(false);
+
+  // Fetch user's current anonymity setting
+  useEffect(() => {
+    async function fetchAnonymousSetting() {
+      if (user?.id) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("is_anonymous")
+          .eq("id", user.id)
+          .single();
+        
+        if (data && !error) {
+          setIsAnonymous(data.is_anonymous || false);
+        }
+      }
+    }
+
+    fetchAnonymousSetting();
+  }, [user, supabase]);
 
   async function updateProfile({
     avatar_url,
@@ -26,6 +46,7 @@ export default function AccountForm() {
         id: user?.id as string,
         full_name: fullname,
         avatar_url,
+        is_anonymous: isAnonymous,
         updated_at: new Date().toISOString(),
       });
       if (error) throw error;
@@ -74,6 +95,18 @@ export default function AccountForm() {
                 className="bg-transparent outline-0 w-full border border-x-0 border-t-0 border-b-sky-500"
                 onChange={(e) => setFullname(e.target.value)}
               />
+            </div>
+            <div className="flex h-[25px] gap-2 items-center">
+              <input
+                id="anonymousCheck"
+                type="checkbox"
+                checked={isAnonymous}
+                onChange={(e) => setIsAnonymous(e.target.checked)}
+                className="h-4 w-4 text-sky-500 rounded border-gray-300 focus:ring-sky-500"
+              />
+              <label htmlFor="anonymousCheck" className="ml-2 text-sm font-medium">
+                Appear Anonymous on Leaderboards
+              </label>
             </div>
             <div onClick={() => updateProfile({ fullname, avatar_url })}>
               <ShinyButton
