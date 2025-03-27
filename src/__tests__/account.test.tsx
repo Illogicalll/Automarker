@@ -30,9 +30,16 @@ describe('AccountForm Component', () => {
     email: 'test@example.com',
   };
 
+  const mockUpsert = jest.fn().mockResolvedValue({ error: null });
   const mockSupabase = {
-    from: jest.fn().mockReturnThis(),
-    upsert: jest.fn().mockResolvedValue({ error: null }),
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          single: jest.fn().mockResolvedValue({ data: { id: 1, name: "Test", is_anonymous: false }, error: null }),
+        })),
+      })),
+      upsert: mockUpsert,
+    })),
   };
 
   beforeEach(() => {
@@ -75,27 +82,30 @@ describe('AccountForm Component', () => {
 
     const nameInput = screen.getByDisplayValue('Test User');
     fireEvent.change(nameInput, { target: { value: 'Updated Name' } });
-
+    
+    const anonymousCheckbox = screen.getByLabelText('Appear Anonymous on Leaderboards');
+    fireEvent.click(anonymousCheckbox);
+    
     const updateButton = screen.getByTestId('shiny-button');
     fireEvent.click(updateButton);
 
     await waitFor(() => {
       expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
-      expect(mockSupabase.upsert).toHaveBeenCalledWith({
+      expect(mockUpsert).toHaveBeenCalledWith({
         id: 'test-user-id',
         full_name: 'Updated Name',
         avatar_url: null,
+        is_anonymous: true,
         updated_at: expect.any(String),
       });
 
       expect(global.alert).toHaveBeenCalledWith('Profile updated!');
-
       expect(mockCheckUser).toHaveBeenCalled();
     });
   });
 
   test('handles update error', async () => {
-    mockSupabase.upsert.mockResolvedValue({ error: new Error('Update failed') });
+    mockSupabase.from().upsert.mockResolvedValue({ error: new Error('Update failed') });
 
     render(<AccountForm />);
 
