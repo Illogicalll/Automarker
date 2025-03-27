@@ -2,6 +2,19 @@
 
 AutoAssign is a robust and streamlined solution to the modern nightmare of coding assignments for large student cohorts.
 
+## Codebase Overview
+
+Within this `/src/` folder there are 7 folders:
+
+- `__tests__`: contains the *Jest* unit tests for the project
+- `app`: contains the pages and site structure
+- `components`: contains various re-usable UI components used to construct the site
+- `lib`: contains a utility function file
+- `public`: contains site assets
+- `utils`: contains various useful functions to do with authentication, redirects, and more
+
+Aside from the folders, there are also various configuration files such as `tsconfig.json` or `jest.config.js`. These specify many parameters that are important for the project to run.
+
 ## Requirements
 
 The following technologies are required to facilitate the automated unit test execution API:
