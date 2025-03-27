@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { useUserContext } from "@/components/context/user-context";
-import GroupList from "@/components/group-list";
+import { createClient } from "../../utils/supabase/client";
+import { useUserContext } from "../../components/context/user-context";
+import GroupList from "../../components/group-list";
 
 export default function Groups() {
   const supabase = createClient();

@@ -1,5 +1,5 @@
 import { ArrowRightIcon } from "@radix-ui/react-icons";
-import ShimmerButton from "@/components/ui/shimmer-button";
+import ShimmerButton from "../components/ui/shimmer-button";
 
 export default function Workflow() {
   return (

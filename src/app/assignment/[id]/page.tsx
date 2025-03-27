@@ -1,28 +1,28 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { useUserContext } from "@/components/context/user-context";
-import { Input } from "@/components/ui/input";
-import CodeComparison from "@/components/ui/code-comparison";
-import { AnimatedSubscribeButton } from "@/components/ui/animated-subscribe-button";
+import { createClient } from "../../../utils/supabase/client";
+import { useUserContext } from "../../../components/context/user-context";
+import { Input } from "../../../components/ui/input";
+import CodeComparison from "../../../components/ui/code-comparison";
+import { AnimatedSubscribeButton } from "../../../components/ui/animated-subscribe-button";
 import { DownloadIcon } from "lucide-react";
-import ShinyButton from "@/components/ui/shiny-button";
-import EditAssignment from "@/components/edit-assignment";
-import ViewSubmissions from "@/components/view-submissions";
-import { LoadingSpinner } from "@/components/ui/spinner";
-import Leaderboard from "@/components/leaderboard";
+import ShinyButton from "../../../components/ui/shiny-button";
+import EditAssignment from "../../../components/edit-assignment";
+import ViewSubmissions from "../../../components/view-submissions";
+import { LoadingSpinner } from "../../../components/ui/spinner";
+import Leaderboard from "../../../components/leaderboard";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
+} from "../../../components/ui/accordion";
 import Link from 'next/link';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../../../components/ui/dialog";
+import { Button } from "../../../components/ui/button";
+import { Card, CardHeader, CardContent } from "../../../components/ui/card";
+import { toast } from "../../../components/ui/use-toast";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const supabase = createClient();

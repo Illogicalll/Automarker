@@ -1,9 +1,9 @@
 "use client";
 
-import SparklesText from "@/components/ui/sparkles-text";
-import { useUserContext } from "@/components/context/user-context";
-import { LoadingSpinner } from "@/components/ui/spinner";
-import { BentoGrid, BentoCard } from "@/components/ui/bento-grid";
+import SparklesText from "../../components/ui/sparkles-text";
+import { useUserContext } from "../../components/context/user-context";
+import { LoadingSpinner } from "../../components/ui/spinner";
+import { BentoGrid, BentoCard } from "../../components/ui/bento-grid";
 import { UserPen, Users } from "lucide-react";
 import { ClipboardIcon } from "@radix-ui/react-icons";
 

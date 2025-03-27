@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "./ui/separator";
 import { HomeIcon, ClipboardIcon, PersonIcon } from "@radix-ui/react-icons";

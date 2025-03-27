@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "../utils/supabase/client";
 import { type User } from "@supabase/supabase-js";
 import { Mail, ALargeSmall } from "lucide-react";
-import ShinyButton from "@/components/ui/shiny-button";
+import ShinyButton from "./ui/shiny-button";
 import { useUserContext } from "./context/user-context";
 
 export default function AccountForm() {

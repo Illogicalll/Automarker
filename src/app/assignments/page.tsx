@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { useUserContext } from "@/components/context/user-context";
-import AssignmentList from "@/components/assignment-list";
+import { createClient } from "../../utils/supabase/client";
+import { useUserContext } from "../../components/context/user-context";
+import AssignmentList from "../../components/assignment-list";
 
 export default function AssignmentsPage() {
   const supabase = createClient();

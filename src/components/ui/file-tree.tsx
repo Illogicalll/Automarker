@@ -11,9 +11,9 @@ import React, {
   useState,
 } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "./button";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 type TreeViewElement = {
   id: string;

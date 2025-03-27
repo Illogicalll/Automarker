@@ -1,22 +1,22 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "../../../../utils/supabase/client";
 import { useEffect, useState, useRef } from "react";
 import JSZip from "jszip";
-import { File, Folder, Tree } from "@/components/ui/file-tree";
-import CodeComparison from "@/components/ui/code-comparison";
-import { Progress } from "@/components/ui/progress";
+import { File, Folder, Tree } from "../../../../components/ui/file-tree";
+import CodeComparison from "../../../../components/ui/code-comparison";
+import { Progress } from "../../../../components/ui/progress";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useUserContext } from "@/components/context/user-context";
-import AiChat from "@/components/ai-chat";
+} from "../../../../components/ui/accordion";
+import { InteractiveHoverButton } from "../../../../components/ui/interactive-hover-button";
+import { Badge } from "../../../../components/ui/badge";
+import { Button } from "../../../../components/ui/button";
+import { useUserContext } from "../../../../components/context/user-context";
+import AiChat from "../../../../components/ai-chat";
 
 interface FileNode {
   id: string;

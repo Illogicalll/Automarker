@@ -1,6 +1,6 @@
-import Languages from "@/components/languages";
-import Workflow from "@/components/workflow";
-import SparklesText from "@/components/ui/sparkles-text";
+import Languages from "../components/languages";
+import Workflow from "../components/workflow";
+import SparklesText from "../components/ui/sparkles-text";
 
 export default function Index() {
   return (
