@@ -5,6 +5,7 @@ AutoAssign is a robust and streamlined solution to the modern nightmare of codin
 ## Requirements
 
 The following technologies are required to facilitate the automated unit test execution API:
+
 - MacOS/Linux based system
 - `node`
 - `cmake`
@@ -14,6 +15,7 @@ The following technologies are required to facilitate the automated unit test ex
 - `python3`
 
 These can all be installed with the following commands:
+
 - MacOS:
   - `brew install node cmake gnu-time openjdk maven python3`
 - Linux:
@@ -36,6 +38,7 @@ These can all be installed with the following commands:
 ## Testing
 
 If you wish to execute the unit tests for yourself to ensure the code is functional, do the following:
+
 - In the `/src/` folder find `tsconfig.json`
 - Change the value of `"jsx"` from `"preserve"` to `"react-jsx"`
 - Save the file
