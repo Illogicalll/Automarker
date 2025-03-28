@@ -30,7 +30,7 @@ The following technologies are required to facilitate the automated unit test ex
 These can all be installed with the following commands:
 
 - MacOS:
-  - `brew install node cmake gnu-time openjdk maven python3`
+  - `brew install node cmake gnu-time openjdk maven python3` (requires `homebrew`)
 - Linux:
   - `sudo apt update && sudo apt install -y nodejs build-essential cmake time default-jdk maven python3 python3-pip python3-venv`
 
